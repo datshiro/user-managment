@@ -31,6 +31,7 @@ func init() {
 
 	serverCommand.Flags().IntVarP(&serverCfg.Port, "port", "p", 3000, "port number to run on")
 	serverCommand.Flags().StringVarP(&serverCfg.DbUrl, "db-url", "d", "postgresql://localhost:5432", "db connection url")
+	serverCommand.Flags().StringVar(&serverCfg.ApiPrefix, "prefix", "/api", "API prefix")
 	rootCmd.AddCommand(serverCommand)
 }
 
@@ -84,5 +85,6 @@ func LoadConfig() (app.Config, error) {
 	if err := env.Parse(&c); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+	log.Printf("%+v\n", c)
 	return c, nil
 }

@@ -28,5 +28,4 @@ func (h registerHandler) Handle(c *gin.Context) {
 	}
 
 	utils.ResponseWithJSON(c, req)
-	return
 }

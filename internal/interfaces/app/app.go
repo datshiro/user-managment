@@ -40,12 +40,14 @@ func (s *server) Start() error {
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
 	// Routers
-	routing(s.engine)
+	routing(s.engine, s.cfg.ApiPrefix)
 
 	return s.srv.ListenAndServe()
 }
 
-func routing(router *gin.Engine) {
+func routing(engine *gin.Engine, apiPrefix string) {
 	registerHandler := register.NewHandler()
+  router := engine.Group(apiPrefix)
+
 	router.POST("/register", registerHandler.Handle)
 }

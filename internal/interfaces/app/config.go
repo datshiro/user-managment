@@ -1,7 +1,8 @@
 package app
 
 type Config struct {
-	Port     int    `env:"PORT"`
-	DbUrl    string `env:"DB_URL"`
-	RedisUrl string `env:"REDIS_URL"`
+	Port      int    `env:"PORT"`
+	DbUrl     string `env:"DB_URL"`
+	RedisUrl  string `env:"REDIS_URL"`
+	ApiPrefix string `env:"API_PREFIX"`
 }
