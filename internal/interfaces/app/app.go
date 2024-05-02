@@ -2,9 +2,12 @@ package app
 
 import (
 	"app/internal/handler/register"
+	"app/internal/infras/database"
 	"app/internal/interfaces/app/middlewares"
+	"app/internal/interfaces/usecases"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -39,14 +42,31 @@ func (s *server) Start() error {
 	s.engine.Use(gin.Recovery())
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
+  // database 
+  dbConfig := database.DBConfig{
+			Host:               "localhost",
+			User:               "postgres",
+			Password:           "postgres",
+			Port:               "5432",
+			DB:                 "cake_db",
+			SSLMode:            "disable",
+			TimeZone:           "Asia/Shanghai",
+  }
+  dbc , err := dbConfig.Connect()
+  if err != nil {
+    log.Fatalf("Failed to make connection to database: %+v", dbConfig)
+  }
+
+  usecase := usecases.NewPostgresUsecase(dbc)
+
 	// Routers
-	routing(s.engine, s.cfg.ApiPrefix)
+	routing(s.engine, s.cfg.ApiPrefix, usecase)
 
 	return s.srv.ListenAndServe()
 }
 
-func routing(engine *gin.Engine, apiPrefix string) {
-	registerHandler := register.NewHandler()
+func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
+	registerHandler := register.NewHandler(usecase.UserUC)
   router := engine.Group(apiPrefix)
 
 	router.POST("/register", registerHandler.Handle)

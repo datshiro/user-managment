@@ -2,17 +2,19 @@ package register
 
 import (
 	"app/internal/handler"
+	"app/internal/interfaces/usecases/user"
 	"app/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-func NewHandler() handler.Handler {
-	return registerHandler{NewRequest: NewRequest}
+func NewHandler(userUC user.UserUsecase) handler.Handler {
+	return registerHandler{NewRequest: NewRequest, UserUsecase: userUC}
 }
 
 type registerHandler struct {
 	NewRequest func() Request
+  UserUsecase user.UserUsecase
 }
 
 func (h registerHandler) Handle(c *gin.Context) {
@@ -26,6 +28,7 @@ func (h registerHandler) Handle(c *gin.Context) {
 		c.Error(err)
     return 
 	}
+  h.UserUsecase.RegisterUser()
 
 	utils.ResponseWithJSON(c, req)
 }
