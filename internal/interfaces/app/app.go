@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type Server interface {
@@ -42,19 +43,9 @@ func (s *server) Start() error {
 	s.engine.Use(gin.Recovery())
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
-  // database 
-  dbConfig := database.DBConfig{
-			Host:               "localhost",
-			User:               "postgres",
-			Password:           "postgres",
-			Port:               "5432",
-			DB:                 "cake_db",
-			SSLMode:            "disable",
-			TimeZone:           "Asia/Shanghai",
-  }
-  dbc , err := dbConfig.Connect()
+  dbc, err := initDatabase(s.cfg.DbConfig)
   if err != nil {
-    log.Fatalf("Failed to make connection to database: %+v", dbConfig)
+    log.Fatalf("Failed to make connection to database: %+v", s.cfg.DbConfig)
   }
 
   usecase := usecases.NewPostgresUsecase(dbc)
@@ -70,4 +61,19 @@ func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
   router := engine.Group(apiPrefix)
 
 	router.POST("/register", registerHandler.Handle)
+}
+
+func initDatabase(cfg database.DBConfig) (*gorm.DB, error) {
+  
+  // database 
+  dbConfig := database.DBConfig{
+			Host:               cfg.Host,
+			User:               cfg.User,
+			Password:           cfg.Password,
+			Port:               cfg.Port,
+			DB:                 cfg.DB,
+			SSLMode:            cfg.SSLMode,
+			TimeZone:           cfg.TimeZone,
+  }
+  return dbConfig.Connect()
 }

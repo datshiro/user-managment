@@ -7,14 +7,14 @@ import (
 )
 
 type DBConfig struct {
-	DB        string
-	User      string
-	Password  string
-	Host      string
-	Port      string
-	SSLMode   string
-	TimeZone  string
-	dialector gorm.Dialector
+	DB        string         `env:"DB"`
+	User      string         `env:"USER"`
+	Password  string         `env:"PASSWORD"`
+	Host      string         `env:"HOST"`
+	Port      string         `env:"PORT"`
+	SSLMode   string         `env:"SSL_MODE" default:"false"`
+	TimeZone  string         `env:"TIME_ZONE" default:"Asia/Shanghai"`
+	dialector gorm.Dialector 
 }
 
 func (config *DBConfig) Connect() (*gorm.DB, error) {
@@ -33,6 +33,8 @@ func (config *DBConfig) NewPostgresConnection() (*gorm.DB, error) {
 
 	// Migrate the schema
 	postgresDbc.AutoMigrate(&models.User{})
+  // End of migration
+
 	return postgresDbc, nil
 }
 
