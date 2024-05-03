@@ -53,9 +53,10 @@ func withMessage(msg string, args ...interface{}) CakeError {
 }
 
 func (e CakeError) Details() error {
-  return e.root
+	return e.root
 }
 
 var (
 	ErrInvalidRequest = withMessage("Invalid Request")
+	ErrCreateFailure  = withMessage("Create failure")
 )

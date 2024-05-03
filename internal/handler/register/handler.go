@@ -1,9 +1,11 @@
 package register
 
 import (
+	"app/internal/consts"
 	"app/internal/handler"
 	"app/internal/interfaces/usecases/user"
 	"app/internal/utils"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +30,18 @@ func (h registerHandler) Handle(c *gin.Context) {
 		c.Error(err)
     return 
 	}
-  h.UserUsecase.RegisterUser()
 
-	utils.ResponseWithJSON(c, req)
+  userData , err := req.toData()
+  if err !=nil {
+		c.Error(consts.ErrInvalidRequest.WithRootCause(err).WithTag("Method", "ConvertRequestData").WithTag("request", fmt.Sprintf("%+v", req)))
+    return 
+  }
+
+  user, err := h.UserUsecase.RegisterUser(c.Request.Context(), userData)
+  if err !=nil {
+		c.Error(consts.ErrCreateFailure.WithRootCause(err).WithTag("Method", "RegisterUser").WithTag("data", userData))
+    return 
+  }
+
+	utils.ResponseWithJSON(c, user)
 }
