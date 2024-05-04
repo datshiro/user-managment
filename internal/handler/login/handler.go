@@ -7,6 +7,7 @@ import (
 	"app/internal/models"
 	"app/internal/utils"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +48,10 @@ func (h loginHandler) Handle(c *gin.Context) {
 	case consts.PhoneNumberLoginType:
 		user, err = h.UserUsecase.LoginWithPhone(c.Request.Context(), req.GetAccount(), req.GetPassword())
 	default:
-		c.Error(consts.ErrLoginFailure.WithRootCause(err).WithTag("Method", "LoginUser").WithTag("data", req))
+		c.Error(consts.NewCakeError(fmt.Errorf("provided login does not support")).
+			WithRootCause(err).
+			WithTag("Method", "LoginUser").
+			WithTag("data", req))
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

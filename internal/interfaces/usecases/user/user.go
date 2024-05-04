@@ -51,7 +51,7 @@ func (uc *userUsecase) LoginWithPhone(ctx context.Context, phone string, passwor
 
 func (uc *userUsecase) RegisterUser(ctx context.Context, data entities.UserData) (*models.User, error) {
 	userModel := data.ToModel()
-	// TODO: Hash Password before store to db
+	// Hash Password implemented at BeforeCreate hook
 	user, err := uc.repo.CreateUser(ctx, userModel)
 	if err != nil {
 		return nil, err

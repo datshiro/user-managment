@@ -1,8 +1,11 @@
 package repositories
 
 import (
+	"app/internal/consts"
 	"app/internal/models"
+	"app/internal/utils"
 	"context"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -11,7 +14,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, userObject *models.User) (*models.User, error)
 	GetUserByID(ctx context.Context, id int) (*models.User, error)
-	UpdateLastLogin(ctx context.Context, id  uint) (bool, error)
+	UpdateLastLogin(ctx context.Context, id uint) (bool, error)
 	GetUserByEmail(ctx context.Context, email string, password string) (*models.User, error)
 	GetUserByUsername(ctx context.Context, username string, password string) (*models.User, error)
 	GetUserByPhone(ctx context.Context, phone string, password string) (*models.User, error)
@@ -42,9 +45,9 @@ func (repo *userRepo) GetUserByID(ctx context.Context, id int) (*models.User, er
 	return user, nil
 }
 
-func (repo *userRepo) UpdateLastLogin(ctx context.Context, id uint) ( bool,  error) {
-  result := repo.dbc.Model(&models.User{}).Where("id = ?", id).Update("latest_login",time.Now())
-  if result.Error != nil {
+func (repo *userRepo) UpdateLastLogin(ctx context.Context, id uint) (bool, error) {
+	result := repo.dbc.Model(&models.User{}).Where("id = ?", id).Update("latest_login", time.Now())
+	if result.Error != nil {
 		return false, result.Error
 	}
 	return true, nil
@@ -56,6 +59,9 @@ func (repo *userRepo) GetUserByEmail(ctx context.Context, email string, password
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
+		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
+	}
 	return user, nil
 }
 
@@ -65,6 +71,9 @@ func (repo *userRepo) GetUserByPhone(ctx context.Context, phone string, password
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
+		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
+	}
 	return user, nil
 }
 
@@ -73,6 +82,9 @@ func (repo *userRepo) GetUserByUsername(ctx context.Context, username string, pa
 	result := repo.dbc.First(user, "username = ?", username)
 	if result.Error != nil {
 		return nil, result.Error
+	}
+	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
+		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
 	}
 	return user, nil
 }

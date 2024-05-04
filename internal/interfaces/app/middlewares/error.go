@@ -14,11 +14,10 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 		errs := c.Errors
 		if len(errs) > 0 {
-			log.Println("ErrorHandlerMiddleware", errs)
 			err, ok := errs[0].Err.(consts.CakeError)
 			if ok {
 				// Log root error
-				log.Println(err.Details())
+        log.Printf("error details: %v",err.Details())
 				responseCakeError(c, err)
 				return
 			}

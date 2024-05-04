@@ -26,4 +26,12 @@ login_with_phone() {
     -d "{\"phone_number\":\"$account\", \"password\": \"$password\"}"
 }
 
+login_fail() {
+  local account=$1
+  local password=$2
+  curl -X POST "$API_URL/login" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "{\"phonenumber\":\"$account\", \"password\": \"$password\"}"
+}
+
 "$@"

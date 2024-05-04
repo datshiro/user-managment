@@ -22,11 +22,15 @@ func NewCakeError(err error, args ...interface{}) CakeError {
 // Error message is combination of message, args and tags
 func (e CakeError) Error() string {
 	var msg string
+  re, ok := e.root.(CakeError)
+  if ok {
+    msg += fmt.Sprintf("%v; ", re.Error()) 
+  }
 	if e.err != nil {
-		msg = e.err.Error()
+		msg += fmt.Sprintf("%v; ", e.err.Error())
 	}
 	for _, arg := range e.args {
-		msg += fmt.Sprintf("; %+v", arg)
+		msg += fmt.Sprintf("%+v; ", arg)
 	}
 
 	return msg
@@ -81,8 +85,8 @@ func withMessage(msg string, args ...interface{}) CakeError {
 
 
 var (
-	ErrInvalidRequest = withMessage("Invalid Request")
+	ErrInvalidRequest = withMessage("Invalid request")
 	ErrCreateFailure  = withMessage("Create failure")
-	ErrLoginFailure   = withMessage("Provided login credential doesn't support")
+	ErrLoginFailure   = withMessage("Login Failure")
 	ErrDataNotFound   = withMessage("Requesting resource not found")
 )

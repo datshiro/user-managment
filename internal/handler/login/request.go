@@ -50,10 +50,10 @@ func (r *request) Bind(c *gin.Context) error {
 
 func (r *request) Validate() error {
 	if r.account == "" && r.loginType == 0 {
-		return consts.NewCakeError(fmt.Errorf("Account info cannot be empty, please provide username, email or phone number"))
+		return consts.NewCakeError(fmt.Errorf("account info cannot be empty, please provide username, email or phone number"))
 	}
 	if r.Password == "" {
-		return consts.NewCakeError(fmt.Errorf("Password cannot be empty."))
+		return consts.NewCakeError(fmt.Errorf("password cannot be empty"))
 	}
 	return nil
 }
