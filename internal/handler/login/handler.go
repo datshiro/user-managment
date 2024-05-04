@@ -51,7 +51,7 @@ func (h loginHandler) Handle(c *gin.Context) {
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.Error(consts.ErrDataNotFound.WithHttpCode(http.StatusNotFound).WithTag("Method", "LoginUser"))
+			c.Error(consts.ErrDataNotFound.WithHttpCode(http.StatusNotFound).WithTag("Method", "LoginUser").WithTag("data", req))
 			return
 		}
 		c.Error(consts.ErrLoginFailure.WithRootCause(err).WithTag("Method", "LoginUser").WithTag("data", req))

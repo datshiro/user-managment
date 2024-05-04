@@ -19,7 +19,6 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 			if ok {
 				// Log root error
 				log.Println(err.Details())
-				log.Println(err.Error())
 				responseCakeError(c, err)
 				return
 			}

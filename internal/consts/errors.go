@@ -16,7 +16,7 @@ type CakeError struct {
 }
 
 func NewCakeError(err error, args ...interface{}) CakeError {
-	return CakeError{root: err, tags: map[string]interface{}{}}
+  return CakeError{root: err, err: err, tags: map[string]interface{}{}}
 }
 
 // Error message is combination of message, args and tags
@@ -29,9 +29,6 @@ func (e CakeError) Error() string {
 		msg += fmt.Sprintf("; %+v", arg)
 	}
 
-	for tag, value := range e.tags {
-		msg += fmt.Sprintf("; %s=%+v", tag, value)
-	}
 	return msg
 }
 
@@ -47,8 +44,15 @@ func (e CakeError) WithRootCause(err error) CakeError {
 	return e
 }
 
-func (e CakeError) Details() error {
-	return e.root
+func (e CakeError) Details() string {
+	var msg string 
+  if e.root != nil {
+    msg  = e.root.Error()
+  }
+	for tag, value := range e.tags {
+		msg += fmt.Sprintf("; %s=%+v", tag, value)
+	}
+	return msg
 }
 
 // Set HTTP Status Code which will set to header in response
