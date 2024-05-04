@@ -1,6 +1,7 @@
 package app
 
 import (
+	"app/internal/handler/login"
 	"app/internal/handler/register"
 	"app/internal/infras/database"
 	"app/internal/interfaces/app/middlewares"
@@ -43,12 +44,12 @@ func (s *server) Start() error {
 	s.engine.Use(gin.Recovery())
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
-  dbc, err := initDatabase(s.cfg.DbConfig)
-  if err != nil {
-    log.Fatalf("Failed to make connection to database: %+v", s.cfg.DbConfig)
-  }
+	dbc, err := initDatabase(s.cfg.DbConfig)
+	if err != nil {
+		log.Fatalf("Failed to make connection to database: %s |  %+v", err, s.cfg.DbConfig)
+	}
 
-  usecase := usecases.NewPostgresUsecase(dbc)
+	usecase := usecases.NewPostgresUsecase(dbc)
 
 	// Routers
 	routing(s.engine, s.cfg.ApiPrefix, usecase)
@@ -57,23 +58,22 @@ func (s *server) Start() error {
 }
 
 func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
-	registerHandler := register.NewHandler(usecase.UserUC)
-  router := engine.Group(apiPrefix)
+	router := engine.Group(apiPrefix)
 
-	router.POST("/register", registerHandler.Handle)
+	router.POST("/register", register.NewHandler(usecase.UserUC).Handle)
+	router.POST("/login", login.NewHandler(usecase.UserUC).Handle)
 }
 
 func initDatabase(cfg database.DBConfig) (*gorm.DB, error) {
-  
-  // database 
-  dbConfig := database.DBConfig{
-			Host:               cfg.Host,
-			User:               cfg.User,
-			Password:           cfg.Password,
-			Port:               cfg.Port,
-			DB:                 cfg.DB,
-			SSLMode:            cfg.SSLMode,
-			TimeZone:           cfg.TimeZone,
-  }
-  return dbConfig.Connect()
+	// database
+	dbConfig := database.DBConfig{
+		Host:     cfg.Host,
+		User:     cfg.User,
+		Password: cfg.Password,
+		Port:     cfg.Port,
+		DB:       cfg.DB,
+		SSLMode:  cfg.SSLMode,
+		TimeZone: cfg.TimeZone,
+	}
+	return dbConfig.NewPostgresConnection()
 }

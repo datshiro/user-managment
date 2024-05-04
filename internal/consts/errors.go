@@ -2,15 +2,17 @@ package consts
 
 import (
 	"fmt"
+	"net/http"
 )
 
 // Custom error type for internal service
 // this struct must be initialize via NewCakeError
 type CakeError struct {
-	root error
-	err  error
-	args []interface{}
-	tags map[string]interface{}
+	root     error
+	err      error
+	args     []interface{}
+	tags     map[string]interface{}
+	httpCode int
 }
 
 func NewCakeError(err error, args ...interface{}) CakeError {
@@ -19,7 +21,10 @@ func NewCakeError(err error, args ...interface{}) CakeError {
 
 // Error message is combination of message, args and tags
 func (e CakeError) Error() string {
-	msg := e.err.Error()
+	var msg string
+	if e.err != nil {
+		msg = e.err.Error()
+	}
 	for _, arg := range e.args {
 		msg += fmt.Sprintf("; %+v", arg)
 	}
@@ -42,6 +47,24 @@ func (e CakeError) WithRootCause(err error) CakeError {
 	return e
 }
 
+func (e CakeError) Details() error {
+	return e.root
+}
+
+// Set HTTP Status Code which will set to header in response
+func (e CakeError) WithHttpCode(code int) CakeError {
+  e.httpCode = code
+	return e
+}
+
+// Set HTTP Status Code which will set to header in response
+func (e CakeError) GetCode() int {
+  if e.httpCode == 0{
+    return http.StatusBadRequest // 400 as default
+  }
+	return e.httpCode
+}
+
 // Init error with error type
 func withError(err error, args ...interface{}) CakeError {
 	return NewCakeError(err, args...)
@@ -52,11 +75,10 @@ func withMessage(msg string, args ...interface{}) CakeError {
 	return NewCakeError(fmt.Errorf(msg), args...)
 }
 
-func (e CakeError) Details() error {
-	return e.root
-}
 
 var (
 	ErrInvalidRequest = withMessage("Invalid Request")
 	ErrCreateFailure  = withMessage("Create failure")
+	ErrLoginFailure   = withMessage("Provided login credential doesn't support")
+	ErrDataNotFound   = withMessage("Requesting resource not found")
 )

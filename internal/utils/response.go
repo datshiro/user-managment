@@ -18,3 +18,4 @@ func ResponseWithJSON(c *gin.Context, data interface{}) {
 		c.JSON(http.StatusOK, ResponseObject{Success: true, Data: data})
 	}
 }
+

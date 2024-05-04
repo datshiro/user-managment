@@ -12,7 +12,7 @@ type DBConfig struct {
 	Password  string         `env:"PASSWORD"`
 	Host      string         `env:"HOST"`
 	Port      string         `env:"PORT"`
-	SSLMode   string         `env:"SSL_MODE" default:"false"`
+	SSLMode   string         `env:"SSL_MODE" default:"disable"`
 	TimeZone  string         `env:"TIME_ZONE" default:"Asia/Shanghai"`
 	dialector gorm.Dialector 
 }
