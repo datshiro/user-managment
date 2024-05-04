@@ -7,8 +7,8 @@ import (
 )
 
 type ResponseObject struct {
-	Success bool
-	Data    interface{}
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
 }
 
 func ResponseWithJSON(c *gin.Context, data interface{}) {
