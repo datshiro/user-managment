@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -62,5 +63,25 @@ func (h loginHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	utils.ResponseWithJSON(c, user)
+	utils.ResponseWithJSON(c, toResponse(user))
+}
+
+func toResponse(user *models.User) response {
+  return response{
+    Fullname   : user.Fullname,
+    PhoneNumber: user.PhoneNumber,
+    Email      : user.Email,
+    Username   : user.Username,
+    Birthday   : user.Birthday,
+    LatestLogin: user.LatestLogin,
+  }
+}
+
+type response struct {
+	Fullname    string    `json:"fullname"`
+	PhoneNumber string    `json:"phone_number"`
+	Email       string    `json:"email"`
+	Username    string    `json:"username"`
+	Birthday    time.Time `json:"birthday"`
+	LatestLogin time.Time `json:"latest_login"`
 }

@@ -21,8 +21,8 @@ import (
 )
 
 func setupRouter(uc user.UserUsecase) *gin.Engine {
-	r := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
 	r.Use(middlewares.ErrorHandlerMiddleware())
 	r.POST("/register", NewHandler(uc).Handle)
 	return r
@@ -54,7 +54,7 @@ func TestRegisterRoute(t *testing.T) {
 			nil,
 		},
 		{
-      "success: with username only ",
+			"success: with username only ",
 			entities.UserData{
 				Fullname:    "Nguyen Quoc Dat",
 				PhoneNumber: "",
@@ -72,7 +72,7 @@ func TestRegisterRoute(t *testing.T) {
 			nil,
 		},
 		{
-      "success: with email only ",
+			"success: with email only ",
 			entities.UserData{
 				Fullname:    "Nguyen Quoc Dat",
 				PhoneNumber: "",
@@ -90,7 +90,7 @@ func TestRegisterRoute(t *testing.T) {
 			nil,
 		},
 		{
-      "failed: missing account info",
+			"failed: missing account info",
 			entities.UserData{
 				Fullname:    "Nguyen Quoc Dat",
 				PhoneNumber: "",
@@ -108,7 +108,7 @@ func TestRegisterRoute(t *testing.T) {
 			consts.ErrMissingCredentialInfo,
 		},
 		{
-      "failed: missing password",
+			"failed: missing password",
 			entities.UserData{
 				Fullname:    "Nguyen Quoc Dat",
 				PhoneNumber: "123456790",
@@ -128,31 +128,33 @@ func TestRegisterRoute(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		mock := new(mocks.UserUsecase)
-		mock.
-			On("RegisterUser", context.Background(), tt.args).
-			Return(tt.expected, nil)
+		t.Run(tt.name, func(t *testing.T) {
+			mock := new(mocks.UserUsecase)
+			mock.
+				On("RegisterUser", context.Background(), tt.args).
+				Return(tt.expected, nil)
 
-		router := setupRouter(mock)
-		w := httptest.NewRecorder()
-		b, err := json.Marshal(tt.args)
-		assert.NoError(t, err, "Marshal request body failed")
-
-		req, err := http.NewRequest("POST", "/register", bytes.NewBuffer(b))
-		assert.NoError(t, err, "Create test request failed")
-		router.ServeHTTP(w, req)
-
-		if tt.expectedErr == nil {
-			// Parse success result
-			expectedResponse := utils.ResponseObject{Success: true, Data: tt.expected}
-			expected, err := json.Marshal(expectedResponse)
+			router := setupRouter(mock)
+			w := httptest.NewRecorder()
+			b, err := json.Marshal(tt.args)
 			assert.NoError(t, err, "Marshal request body failed")
 
-			assert.Equal(t, 200, w.Code, tt.name)
-			assert.Equal(t, bytes.NewBuffer(expected).String(), w.Body.String(), tt.name)
-		} else {
-			assert.NotEqual(t, 200, w.Code, tt.name)
-			assert.Equal(t, fmt.Sprintf("%q",tt.expectedErr.Error()), w.Body.String(), tt.name)
-		}
+			req, err := http.NewRequest("POST", "/register", bytes.NewBuffer(b))
+			assert.NoError(t, err, "Create test request failed")
+			router.ServeHTTP(w, req)
+
+			if tt.expectedErr == nil {
+				// Parse success result
+				expectedResponse := utils.ResponseObject{Success: true, Data: tt.expected}
+				expected, err := json.Marshal(expectedResponse)
+				assert.NoError(t, err, "Marshal request body failed")
+
+				assert.Equal(t, 200, w.Code, tt.name)
+				assert.Equal(t, bytes.NewBuffer(expected).String(), w.Body.String(), tt.name)
+			} else {
+				assert.NotEqual(t, 200, w.Code, tt.name)
+				assert.Equal(t, fmt.Sprintf("%q", tt.expectedErr.Error()), w.Body.String(), tt.name)
+			}
+		})
 	}
 }

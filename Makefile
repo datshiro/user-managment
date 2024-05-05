@@ -14,7 +14,8 @@ db/connect:
 	pgcli -h 0.0.0.0 -u postgres -W -d cake_db
 
 test:
-	go test ./... -v
+	go test -v ./... 
+
 
 mockery:
 	mockery --dir=internal/interfaces --output=internal/mocks -r --all
