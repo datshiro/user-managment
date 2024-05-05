@@ -4,7 +4,6 @@ import (
 	"app/internal/consts"
 	"app/internal/handler"
 	"app/internal/utils"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,12 +49,12 @@ func (r *request) Bind(c *gin.Context) error {
 
 func (r *request) Validate() error {
 	if r.account == "" && r.loginType == 0 {
-		return consts.NewCakeError(fmt.Errorf("account info cannot be empty, please provide username, email or phone number"))
+		return consts.ErrMissingCredentialInfo
 	}
 	if r.Password == "" {
-		return consts.NewCakeError(fmt.Errorf("password cannot be empty"))
+    return consts.ErrPasswordCannotBeEmpty
 	}
-	return nil
+  return nil
 }
 
 func (r *request) GetAccount() string {

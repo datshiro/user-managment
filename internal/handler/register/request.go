@@ -1,6 +1,7 @@
 package register
 
 import (
+	"app/internal/consts"
 	"app/internal/handler"
 	"app/internal/interfaces/entities"
 	"app/internal/utils"
@@ -21,20 +22,44 @@ func NewRequest() Request {
 }
 
 type request struct {
-	Username    string    `form:"username"  json:"username"`
-	Email       string    `form:"email"  json:"email"`
-	Fullname    string    `form:"fullname" json:"fullname"`
-	PhoneNumber string    `form:"phone_number" json:"phone_number"`
-	Password    string    `form:"password" json:"password"`
-	Birthday    time.Time `form:"birthday" json:"birthday"`
-	LatestLogin time.Time `form:"latest_login" json:"latest_login"`
+	Username    string           `form:"username"  json:"username"`
+	Email       string           `form:"email"  json:"email"`
+	Fullname    string           `form:"fullname" json:"fullname"`
+	PhoneNumber string           `form:"phone_number" json:"phone_number"`
+	Password    string           `form:"password" json:"password"`
+	Birthday    time.Time        `form:"birthday" json:"birthday"`
+	LatestLogin time.Time        `form:"latest_login" json:"latest_login"`
+	account     string           // Account value for authenticating
+	loginType   consts.LoginType // Username | Email | PhoneNumber
 }
 
 func (r *request) Bind(c *gin.Context) error {
-	return utils.BindRequest(c, r, "registerHandler")
+	if err := utils.BindRequest(c, r, "LoginHandler"); err != nil {
+		return err
+	}
+	if r.Username != "" {
+		r.account = r.Username
+		r.loginType = consts.UserNameLoginType
+	}
+	if r.Email != "" {
+		r.account = r.Email
+		r.loginType = consts.EmailLoginType
+	}
+	if r.PhoneNumber != "" {
+		r.account = r.PhoneNumber
+		r.loginType = consts.PhoneNumberLoginType
+	}
+	return nil
+
 }
 
-func (*request) Validate() error {
+func (r *request) Validate() error {
+	if r.account == "" && r.loginType == 0 {
+		return consts.ErrMissingCredentialInfo
+	}
+	if r.Password == "" {
+    return consts.ErrPasswordCannotBeEmpty
+	}
 	return nil
 }
 

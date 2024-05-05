@@ -14,19 +14,17 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 
 		errs := c.Errors
 		if len(errs) > 0 {
+      // log.Println("errs", errs)
 			err, ok := errs[0].Err.(consts.CakeError)
 			if ok {
 				// Log root error
-        log.Printf("error details: %v",err.Details())
-				responseCakeError(c, err)
+				log.Printf("error details: %v", err.Details())
+				c.JSON(err.GetCode(), err.Error())
 				return
 			}
 			log.Printf("Unknown err %+v \n", err)
-			c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": err})
+			c.JSON(http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
-}
-
-func responseCakeError(c *gin.Context, err consts.CakeError) {
-	c.JSON(err.GetCode(), map[string]interface{}{"error": err.Error()})
 }
