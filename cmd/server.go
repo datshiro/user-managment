@@ -29,8 +29,8 @@ func init() {
 		log.Fatal(err)
 	}
 
-	serverCommand.Flags().IntVarP(&serverCfg.Port, "port", "p", 3000, "port number to run on")
-	serverCommand.Flags().StringVar(&serverCfg.ApiPrefix, "prefix", "/api", "API prefix")
+	serverCommand.Flags().IntVarP(&serverCfg.Port, "port", "p", serverCfg.Port, "port number to run on")
+	serverCommand.Flags().StringVar(&serverCfg.ApiPrefix, "prefix", serverCfg.ApiPrefix, "API prefix")
 	rootCmd.AddCommand(serverCommand)
 }
 

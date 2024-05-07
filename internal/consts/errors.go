@@ -51,7 +51,7 @@ func (e CakeError) WithRootCause(err error) CakeError {
 func (e CakeError) Details() string {
 	var msg string
 	if e.root != nil {
-		msg = e.root.Error()
+		msg += e.root.Error()
 	}
 	for tag, value := range e.tags {
 		msg += fmt.Sprintf("; %s=%+v", tag, value)

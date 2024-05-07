@@ -5,6 +5,7 @@ import (
 	"app/internal/models"
 	"app/internal/utils"
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,9 +30,38 @@ type userRepo struct {
 }
 
 func (repo *userRepo) CreateUser(ctx context.Context, data *models.User) (*models.User, error) {
-	result := repo.dbc.Create(data)
+	tx := repo.dbc.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Check user existence
+	var existed bool
+	err := tx.Model(&models.User{}).
+		Select("count(*) > 0").
+		Where("username = ? OR email = ? OR phone_number = ?", data.Username, data.Email, data.PhoneNumber).
+		Find(&existed).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, consts.NewCakeError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
+		} else {
+			return nil, consts.NewCakeError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
+		}
+	}
+	if existed {
+		return nil, consts.NewCakeError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
+	}
+
+	result := tx.Create(data)
 	if result.Error != nil {
+		tx.Rollback()
 		return nil, result.Error
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, consts.NewCakeError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
 	}
 	return data, nil
 }

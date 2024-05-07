@@ -58,5 +58,19 @@ register_failed() {
     -d "{\"username\":\"$username\", \"email\":\"$email\", \"fullname\": \"$fullname\", \"phone_number\": \"$phone\", \"password\": \"$password\"}"
 }
 
+register_duplicated() {
+  local username=$(random_string)
+  local email=$(random_string)
+  local fullname=$(random_string)
+  local phone=$(random_number)
+  local password="str0ngP@sdw0rd"
+  curl -X POST "$API_URL/register" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$username\", \"email\":\"$email\", \"fullname\": \"$fullname\", \"phone_number\": \"$phone\", \"password\": \"$password\"}"
+  curl -X POST "$API_URL/register" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$username\", \"email\":\"$email\", \"fullname\": \"$fullname\", \"phone_number\": \"$phone\", \"password\": \"$password\"}"
+}
+
 # Call register function or other functions depending on script arguments
 "$@"
