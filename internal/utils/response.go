@@ -1,3 +1,4 @@
+
 package utils
 
 import (
@@ -8,10 +9,11 @@ import (
 
 type ResponseObject struct {
 	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data"`
 }
 
-func ResponseWithJSON(c *gin.Context, data interface{}) {
+func JSON(c *gin.Context, data interface{}) {
 	if gin.IsDebugging() {
 		c.IndentedJSON(http.StatusOK, ResponseObject{Success: true, Data: data})
 	} else {
@@ -19,3 +21,10 @@ func ResponseWithJSON(c *gin.Context, data interface{}) {
 	}
 }
 
+func Error(c *gin.Context, code int, err error, data interface{}, messages ...string) {
+  message := err.Error()
+  for _, msg := range messages {
+    message += msg
+  }
+	c.JSON(code, ResponseObject{Success: false, Data: data, Message: message})
+}

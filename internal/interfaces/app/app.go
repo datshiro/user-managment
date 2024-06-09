@@ -1,8 +1,6 @@
 package app
 
 import (
-	"app/internal/handler/login"
-	"app/internal/handler/register"
 	"app/internal/infras/database"
 	"app/internal/interfaces/app/middlewares"
 	"app/internal/interfaces/usecases"
@@ -49,6 +47,10 @@ func NewApp(opts ...OptFunc) App {
 	if o.IsConnectDatabase {
 		a.dbc = database.NewPostgresConnection()
 	}
+
+	// Routers
+	usecase := usecases.NewPostgresUsecase(a.dbc)
+	routing(engine, o.ApiPrefix, usecase)
 	return a
 }
 
@@ -57,17 +59,6 @@ func (s *app) Start() error {
 	s.engine.Use(gin.Recovery())
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
-	usecase := usecases.NewPostgresUsecase(s.dbc)
-
-	// Routers
-	routing(s.engine, s.cfg.ApiPrefix, usecase)
-
 	return s.srv.ListenAndServe()
 }
 
-func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
-	router := engine.Group(apiPrefix)
-
-	router.POST("/register", register.NewHandler(usecase.UserUC).Handle)
-	router.POST("/login", login.NewHandler(usecase.UserUC).Handle)
-}

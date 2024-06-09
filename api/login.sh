@@ -13,7 +13,7 @@ login_with_username() {
 login_with_email() {
   local account=$1
   local password=$2
-  curl -X POST "$API_URL/login" \
+  curl -v -X POST "$API_URL/login" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "{\"email\":\"$account\", \"password\": \"$password\"}"
 }
@@ -29,7 +29,7 @@ login_with_phone() {
 login_fail() {
   local account=$1
   local password=$2
-  curl -X POST "$API_URL/login" \
+  curl -v -X POST "$API_URL/login" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "{\"phonenumber\":\"$account\", \"password\": \"$password\"}"
 }

@@ -1,7 +1,6 @@
 package user
 
 import (
-	"app/internal/interfaces/entities"
 	"app/internal/interfaces/repositories"
 	"app/internal/models"
 	"context"
@@ -11,7 +10,7 @@ type UserUsecase interface {
 	LoginWithEmail(ctx context.Context, email string, password string) (*models.User, error)
 	LoginWithUsername(ctx context.Context, username string, password string) (*models.User, error)
 	LoginWithPhone(ctx context.Context, phone string, password string) (*models.User, error)
-	RegisterUser(ctx context.Context, data entities.UserData) (*models.User, error)
+	RegisterUser(ctx context.Context, data *models.User) (*models.User, error)
 }
 
 func NewUseCase(repo repositories.UserRepository) UserUsecase {
@@ -49,10 +48,9 @@ func (uc *userUsecase) LoginWithPhone(ctx context.Context, phone string, passwor
 	return user, err
 }
 
-func (uc *userUsecase) RegisterUser(ctx context.Context, data entities.UserData) (*models.User, error) {
-	userModel := data.ToModel()
+func (uc *userUsecase) RegisterUser(ctx context.Context, data *models.User) (*models.User, error) {
 	// Hash Password implemented at BeforeCreate hook
-	user, err := uc.repo.CreateUser(ctx, userModel)
+	user, err := uc.repo.CreateUser(ctx, data)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ go 1.21.4
 require (
 	github.com/caarlos0/env/v11 v11.0.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
@@ -14,6 +15,7 @@ require (
 )
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

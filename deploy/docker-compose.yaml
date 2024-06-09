@@ -13,6 +13,8 @@ services:
       - 3000:${PORT}
     environment:
       PORT: ${PORT}
+    depends_on:
+      - db
 
   db:
     image: postgres

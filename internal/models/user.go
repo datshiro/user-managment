@@ -14,9 +14,9 @@ import (
 type User struct {
 	gorm.Model
   Fullname    string 
-  PhoneNumber string `gorm:"unique"`
+  PhoneNumber string 
   Email       string `gorm:"unique"`
-  Username    string `gorm:"unique"`
+  Username    string
 	Password    string
 	Birthday    time.Time
 	LatestLogin time.Time

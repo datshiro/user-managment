@@ -4,10 +4,10 @@ up:
 	docker compose --env-file=.env -f deploy/docker-compose.yaml up -d
 
 down:
-	docker compose -f deploy/docker-compose.yaml down
+	docker compose --env-file=.env -f deploy/docker-compose.yaml down
 
 build:
-	docker compose -f deploy/docker-compose.yaml build
+	docker compose --env-file=.env -f deploy/docker-compose.yaml build
 
 logs:
 	docker logs -f my-app
@@ -18,7 +18,14 @@ db/connect:
 test:
 	go test -v ./... 
 
+coverage:
+	go test -v -coverprofile cover.out ./...
+	go tool cover -html cover.out -o cover.html
+	rm cover.out
 
+
+mockery: 
+	mockery --dir=internal/interfaces --output=internal/mocks -r --all
 
 dind:
 	docker network create jenkins || true

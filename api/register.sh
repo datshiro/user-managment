@@ -2,6 +2,7 @@
 
 . "./api/.env" 
 
+API_URL=$API_URL/auth
 # Function to generate a random alphanumeric string of length 8
 random_string() {
   local chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -26,7 +27,7 @@ random_number() {
 # Function to register using the API
 register() {
   local username=$(random_string)
-  local email=$(random_string)
+  local email=$(random_string)@gmail.com
   local fullname=$(random_string)
   local phone=$(random_number)
   local password="str0ngP@sdw0rd"

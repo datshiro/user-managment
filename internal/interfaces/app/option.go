@@ -37,3 +37,9 @@ func WithPort(port int) OptFunc {
 		c.Port = port
 	}
 }
+
+func WithDatabase(isConnectDatabase bool) OptFunc {
+	return func(c *Opts) {
+		c.IsConnectDatabase = isConnectDatabase
+	}
+}
