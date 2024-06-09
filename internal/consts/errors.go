@@ -6,8 +6,8 @@ import (
 )
 
 // Custom error type for internal service
-// this struct must be initialize via NewCakeError
-type CakeError struct {
+// this struct must be initialize via 
+type CustomError struct {
 	root     error
 	err      error
 	args     []interface{}
@@ -15,14 +15,14 @@ type CakeError struct {
 	httpCode int
 }
 
-func NewCakeError(err error, args ...interface{}) CakeError {
-	return CakeError{root: err, err: err, tags: map[string]interface{}{}}
+func NewError(err error, args ...interface{}) CustomError {
+	return CustomError{root: err, err: err, tags: map[string]interface{}{}}
 }
 
 // Error message is combination of message, args and tags
-func (e CakeError) Error() string {
+func (e CustomError) Error() string {
 	var msg string
-	re, ok := e.root.(CakeError)
+	re, ok := e.root.(CustomError)
 	if ok {
 		msg += fmt.Sprintf("%v; ", re.Error())
 	}
@@ -37,18 +37,18 @@ func (e CakeError) Error() string {
 }
 
 // Add tag to error for additional info, which useful for log and tracing
-func (e CakeError) WithTag(key string, value interface{}) CakeError {
+func (e CustomError) WithTag(key string, value interface{}) CustomError {
 	e.tags[key] = value
 	return e
 }
 
 // set root cause error
-func (e CakeError) WithRootCause(err error) CakeError {
+func (e CustomError) WithRootCause(err error) CustomError {
 	e.root = err
 	return e
 }
 
-func (e CakeError) Details() string {
+func (e CustomError) Details() string {
 	var msg string
 	if e.root != nil {
 		msg += e.root.Error()
@@ -60,13 +60,13 @@ func (e CakeError) Details() string {
 }
 
 // Set HTTP Status Code which will set to header in response
-func (e CakeError) WithHttpCode(code int) CakeError {
+func (e CustomError) WithHttpCode(code int) CustomError {
 	e.httpCode = code
 	return e
 }
 
 // Set HTTP Status Code which will set to header in response
-func (e CakeError) GetCode() int {
+func (e CustomError) GetCode() int {
 	if e.httpCode == 0 {
 		return http.StatusBadRequest // 400 as default
 	}
@@ -74,13 +74,13 @@ func (e CakeError) GetCode() int {
 }
 
 // Init error with error type
-func withError(err error, args ...interface{}) CakeError {
-	return NewCakeError(err, args...)
+func withError(err error, args ...interface{}) CustomError {
+	return NewError(err, args...)
 }
 
 // Init error with string message
-func withMessage(msg string, args ...interface{}) CakeError {
-	return NewCakeError(fmt.Errorf(msg), args...)
+func withMessage(msg string, args ...interface{}) CustomError {
+	return NewError(fmt.Errorf(msg), args...)
 }
 
 var (

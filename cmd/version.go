@@ -12,9 +12,9 @@ func init() {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of Cake",
-	Long:  `All software has versions. This is Cake's`,
+	Short: "Print the version number of app",
+	Long:  `All software has versions. This is an api server version`,
   Run: func(cmd *cobra.Command, args []string) {
-    fmt.Println("Cake 1.0.0")
+    fmt.Println("App 1.0.0")
   },
 }

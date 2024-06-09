@@ -28,14 +28,14 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error)  {
 
   if err != nil {
     if errors.Is(err, bcrypt.ErrPasswordTooLong) {
-      err = consts.NewCakeError(fmt.Errorf("password too long; %v", err))
+      err = consts.NewError(fmt.Errorf("password too long; %v", err))
       return
     }
     if errors.Is(err, bcrypt.ErrHashTooShort) {
-      err = consts.NewCakeError(fmt.Errorf("password too short; %v", err))
+      err = consts.NewError(fmt.Errorf("password too short; %v", err))
       return
     }
-    err = consts.NewCakeError(fmt.Errorf("failed to hash password; %v", err))
+    err = consts.NewError(fmt.Errorf("failed to hash password; %v", err))
   }
   return
 }

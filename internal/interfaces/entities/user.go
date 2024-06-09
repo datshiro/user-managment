@@ -23,5 +23,6 @@ func (u UserData) ToModel() (*models.User) {
     Username: u.Username,
     Password: u.Password,
     Birthday: u.Birthday,
+    LatestLogin: u.LatestLogin,
   }
 }

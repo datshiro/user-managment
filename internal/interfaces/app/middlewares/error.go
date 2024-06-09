@@ -15,7 +15,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 		errs := c.Errors
 		if len(errs) > 0 {
       // log.Println("errs", errs)
-			err, ok := errs[0].Err.(consts.CakeError)
+			err, ok := errs[0].Err.(consts.CustomError)
 			if ok {
 				// Log root error
 				log.Printf("error details: %v", err.Details())

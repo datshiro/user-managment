@@ -46,13 +46,13 @@ func (repo *userRepo) CreateUser(ctx context.Context, data *models.User) (*model
 		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, consts.NewCakeError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
+			return nil, consts.NewError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
 		} else {
-			return nil, consts.NewCakeError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
+			return nil, consts.NewError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
 		}
 	}
 	if existed {
-		return nil, consts.NewCakeError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
+		return nil, consts.NewError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
 	}
 
 	result := tx.Create(data)
@@ -61,7 +61,7 @@ func (repo *userRepo) CreateUser(ctx context.Context, data *models.User) (*model
 		return nil, result.Error
 	}
 	if err := tx.Commit().Error; err != nil {
-		return nil, consts.NewCakeError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
+		return nil, consts.NewError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
 	}
 	return data, nil
 }
@@ -90,7 +90,7 @@ func (repo *userRepo) GetUserByEmail(ctx context.Context, email string, password
 		return nil, result.Error
 	}
 	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
-		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
+		return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
 	}
 	return user, nil
 }
@@ -102,7 +102,7 @@ func (repo *userRepo) GetUserByPhone(ctx context.Context, phone string, password
 		return nil, result.Error
 	}
 	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
-		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
+		return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
 	}
 	return user, nil
 }
@@ -114,7 +114,7 @@ func (repo *userRepo) GetUserByUsername(ctx context.Context, username string, pa
 		return nil, result.Error
 	}
 	if ok := utils.CheckPasswordHash(password, user.Password); !ok {
-		return nil, consts.NewCakeError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
+		return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
 	}
 	return user, nil
 }

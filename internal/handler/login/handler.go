@@ -49,7 +49,7 @@ func (h loginHandler) Handle(c *gin.Context) {
 	case consts.PhoneNumberLoginType:
 		user, err = h.UserUsecase.LoginWithPhone(c.Request.Context(), req.GetAccount(), req.GetPassword())
 	default:
-		c.Error(consts.NewCakeError(fmt.Errorf("provided login does not support")).
+		c.Error(consts.NewError(fmt.Errorf("provided login does not support")).
 			WithRootCause(err).
 			WithTag("Method", "LoginUser").
 			WithTag("data", req))

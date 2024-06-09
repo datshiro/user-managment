@@ -8,48 +8,56 @@ import (
 	"app/internal/interfaces/usecases"
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type Server interface {
+type App interface {
 	Start() error
 	Stop(ctx context.Context) error
 }
 
-type server struct {
+type app struct {
 	engine *gin.Engine
 	srv    *http.Server
-	cfg    Config
+	cfg    Opts
+	dbc    *gorm.DB
 }
 
-func (s *server) Stop(ctx context.Context) error {
+func (s *app) Stop(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func NewApp(cfg Config) Server {
+func NewApp(opts ...OptFunc) App {
 	engine := gin.Default()
-	srv := &http.Server{
-		Handler: engine,
-		Addr:    fmt.Sprintf(":%d", cfg.Port),
+	o := defaultOpts()
+
+	for _, optFunc := range opts {
+		optFunc(&o)
 	}
-	return &server{engine: engine, cfg: cfg, srv: srv}
+
+	a := &app{
+		engine: engine,
+		srv: &http.Server{
+			Handler: engine,
+			Addr:    fmt.Sprintf(":%d", o.Port),
+		},
+	}
+
+	if o.IsConnectDatabase {
+		a.dbc = database.NewPostgresConnection()
+	}
+	return a
 }
 
-func (s *server) Start() error {
+func (s *app) Start() error {
 	// Middlwares
 	s.engine.Use(gin.Recovery())
 	s.engine.Use(middlewares.ErrorHandlerMiddleware())
 
-	dbc, err := initDatabase(s.cfg.DbConfig)
-	if err != nil {
-		log.Fatalf("Failed to make connection to database: %s |  %+v", err, s.cfg.DbConfig)
-	}
-
-	usecase := usecases.NewPostgresUsecase(dbc)
+	usecase := usecases.NewPostgresUsecase(s.dbc)
 
 	// Routers
 	routing(s.engine, s.cfg.ApiPrefix, usecase)
@@ -62,18 +70,4 @@ func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
 
 	router.POST("/register", register.NewHandler(usecase.UserUC).Handle)
 	router.POST("/login", login.NewHandler(usecase.UserUC).Handle)
-}
-
-func initDatabase(cfg database.DBConfig) (*gorm.DB, error) {
-	// database
-	dbConfig := database.DBConfig{
-		Host:     cfg.Host,
-		User:     cfg.User,
-		Password: cfg.Password,
-		Port:     cfg.Port,
-		DB:       cfg.DB,
-		SSLMode:  cfg.SSLMode,
-		TimeZone: cfg.TimeZone,
-	}
-	return dbConfig.NewPostgresConnection()
 }

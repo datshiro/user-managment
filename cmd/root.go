@@ -7,13 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 var (
-	rootCmd = &cobra.Command{
-		Use:   "cake",
-		Short: "Cake is a digital bank by VP Bank",
-		Long:  " Cake is a digital bank by VP Bank",
-	}
+	rootCmd = &cobra.Command{}
 )
 
 func Execute() {

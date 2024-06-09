@@ -24,25 +24,19 @@ func init() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 
-	serverCfg, err = LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	serverCommand.Flags().IntVarP(&serverCfg.Port, "port", "p", serverCfg.Port, "port number to run on")
-	serverCommand.Flags().StringVar(&serverCfg.ApiPrefix, "prefix", serverCfg.ApiPrefix, "API prefix")
+	// serverCommand.Flags().IntVarP(&serverCfg.Port, "port", "p", serverCfg.Port, "port number to run on")
+	// serverCommand.Flags().StringVar(&serverCfg.ApiPrefix, "prefix", serverCfg.ApiPrefix, "API prefix")
 	rootCmd.AddCommand(serverCommand)
 }
 
 var (
-	serverCfg app.Config
 	err       error
 
 	serverCommand = &cobra.Command{
 		Use:   "server",
-		Short: "Run Cake's API Server",
+		Short: "Run App API Server",
 		Run: func(cmd *cobra.Command, args []string) {
-			server := app.NewApp(serverCfg)
+			server := app.NewApp()
 
 			// Create a signal channel and start server in a goroutine
 			signChan := make(chan os.Signal, 1)
@@ -78,8 +72,8 @@ var (
 	}
 )
 
-func LoadConfig() (app.Config, error) {
-	c := app.Config{}
+func LoadConfig() (app.Opts, error) {
+	c := app.Opts{}
 
 	if err := env.Parse(&c); err != nil {
 		log.Fatalf("%+v\n", err)
