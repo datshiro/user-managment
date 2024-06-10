@@ -11,11 +11,11 @@ func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) {
 	router := engine.Group(apiPrefix)
 
 	{
-		authRouter := router.Group("auth")
 		authHandler := auth.NewHandler(usecase.UserUC)
 
+    // /auth/*
+		authRouter := router.Group("auth")
 		authRouter.POST("/register", authHandler.HandleRegister)
 		authRouter.POST("/login", authHandler.HandleLogin)
-
 	}
 }

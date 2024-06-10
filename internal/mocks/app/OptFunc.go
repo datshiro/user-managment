@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	app "app/internal/interfaces/app"
+	app "app/internal/infras/app"
 
 	mock "github.com/stretchr/testify/mock"
 )

@@ -12,6 +12,10 @@ build:
 logs:
 	docker logs -f my-app
 
+restart:
+	@make down || true 
+	@make up || true
+
 db/connect:
 	pgcli -h 0.0.0.0 -u postgres -W -d my_db
 

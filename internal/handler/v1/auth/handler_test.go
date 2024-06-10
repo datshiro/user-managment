@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"app/internal/consts"
 	"app/internal/interfaces/usecases/user"
 	mocks "app/internal/mocks/usecases/user"
 	"app/internal/models"
@@ -9,9 +8,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +27,9 @@ func setupRouter(uc user.UserUsecase) *gin.Engine {
 
 func TestSuccessfulRegisterRoute(t *testing.T) {
 	tests := []struct {
-		name        string
-		args        *models.User
-		expected    *models.User
+		name     string
+		args     *models.User
+		expected *models.User
 	}{
 		{
 			"success: register with email",
@@ -66,13 +66,13 @@ func TestSuccessfulRegisterRoute(t *testing.T) {
 			assert.NoError(t, err, "Create test request failed")
 			router.ServeHTTP(w, req)
 
-      // Parse success result
-      expectedResponse := utils.ResponseObject{Success: true, Data: tt.expected}
-      expected, err := json.Marshal(expectedResponse)
-      assert.NoError(t, err, "Marshal request body failed")
+			// Parse success result
+			expectedResponse := utils.ResponseObject{Success: true, Data: tt.expected}
+			expected, err := json.Marshal(expectedResponse)
+			assert.NoError(t, err, "Marshal request body failed")
 
-      assert.Equal(t, 201, w.Code, tt.name)
-      assert.Equal(t, bytes.NewBuffer(expected).String(), w.Body.String(), tt.name)
+			assert.Equal(t, 201, w.Code, tt.name)
+			assert.Equal(t, bytes.NewBuffer(expected).String(), w.Body.String(), tt.name)
 		})
 	}
 }
@@ -92,7 +92,7 @@ func TestFailureRegisterRoute(t *testing.T) {
 				Username:    "",
 				Password:    "sTr0ngP@ssword",
 			},
-			consts.ErrInvalidRequest,
+      errors.New("email must not be empty"),
 		},
 		{
 			"failed: register with empty password",
@@ -103,7 +103,7 @@ func TestFailureRegisterRoute(t *testing.T) {
 				Username:    "",
 				Password:    "sTr0ngP@ssword",
 			},
-			consts.ErrMissingCredentialInfo,
+      nil,
 		},
 		{
 			"failed: existed user",
@@ -114,28 +114,29 @@ func TestFailureRegisterRoute(t *testing.T) {
 				Username:    "datshiro",
 				Password:    "",
 			},
-			consts.ErrCreateFailure,
+      nil,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mock := new(mocks.UserUsecase)
 			mock.
 				On("RegisterUser", context.Background(), tt.args).
-				Return(&models.User{}, tt.expected)
+				Return(nil, tt.expected)
 
 			router := setupRouter(mock)
 			w := httptest.NewRecorder()
-			b, err := json.Marshal(tt.args)
-			assert.NoError(t, err, "Marshal request body failed")
+			b, _ := json.Marshal(tt.args)
 
-			req, err := http.NewRequest("POST", "/register", bytes.NewBuffer(b))
-			assert.NoError(t, err, "Create test request failed")
+			req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(b))
 			router.ServeHTTP(w, req)
 
 			assert.NotEqual(t, 201, w.Code, tt.name)
-			assert.Equal(t, fmt.Sprintf("%q", tt.expected.Error()), w.Body.String(), tt.name)
+      exp := `{"success": false, "message": "Invalid request; ", "data": null}`
+
+			if !reflect.DeepEqual(w.Body.String(), exp) {
+				t.Errorf("RegisterUser() = %s , want=%s", w.Body.String(), exp)
+			}
 		})
 	}
 }

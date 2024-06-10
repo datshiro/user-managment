@@ -2,7 +2,7 @@ package app
 
 import (
 	"app/internal/infras/database"
-	"app/internal/interfaces/app/middlewares"
+	"app/internal/infras/app/middlewares"
 	"app/internal/interfaces/usecases"
 	"context"
 	"fmt"

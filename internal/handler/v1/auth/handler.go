@@ -1,16 +1,14 @@
 package auth
 
 import (
+	"app/internal/common/helper"
 	"app/internal/common/http/response"
 	"app/internal/interfaces/usecases/user"
 	"app/internal/models"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"gorm.io/gorm"
 )
 
@@ -29,49 +27,47 @@ func NewHandler(uc user.UserUsecase) AuthHandler {
 
 // Handlers
 func (h handler) HandleLogin(c *gin.Context) {
-	var req = &LoginRequest{}
+	var req = LoginRequest{}
 
-	if err := c.BindJSON(req); err != nil {
-		response.New(c).Error(http.StatusBadRequest, err)
+	if err := c.BindJSON(&req); err != nil {
+    c.Error(helper.InvalidJSON())
 		return
 	}
 
-	if err := validation.Validate(req.Email, validation.Required, is.Email); err != nil {
-		response.New(c).Error(http.StatusBadRequest, errors.New("email must not be empty"))
-		return
-	}
-
-	if err := validation.Validate(req.Password, validation.Required); err != nil {
-		response.New(c).Error(http.StatusBadRequest, errors.New("password must not be empty"))
-		return
-	}
+  if errs := req.Validate() ; errs != nil {
+    c.Error(helper.InvalidValidationErrors(errs))
+    return
+  }
 
 	user, err := h.uc.LoginWithEmail(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response.New(c).Error(http.StatusNotFound, err)
+      c.Error(helper.NewAPIError(http.StatusNotFound, errors.New("user is not exist")))
 			return
 		}
-		response.New(c).Error(http.StatusInternalServerError, fmt.Errorf("something went wrong, please try again!; %v", err))
+    c.Error(err)
 		return
 	}
 
 	// TODO: generate token
 
-	response.New(c).JSON(user)
-
+  c.JSON(http.StatusOK, map[string]any{
+    "email": user.Email,
+    "birthday": user.Birthday,
+    "phone": user.PhoneNumber,
+  })
 }
 
 func (h handler) HandleRegister(c *gin.Context) {
 	var req = &models.User{}
 
 	if err := c.BindJSON(req); err != nil {
-		response.New(c).Error(http.StatusBadRequest, err)
+    c.Error(helper.InvalidJSON().WithDetails(err))
 		return
 	}
 
 	if err := ValidateRegisterRequest(req); err != nil {
-		response.New(c).Error(http.StatusBadRequest, err)
+    c.Error(helper.InvalidValidationErrors(err))
     return
 	}
 

@@ -32,13 +32,13 @@ func (w *wrapper) JSON(data interface{}) {
 		code = w.Code
 	}
 	if gin.IsDebugging() {
-		w.ctx.IndentedJSON(code, ResponseObject{Success: true, Data: data})
+		w.ctx.IndentedJSON(code, ResponseObject{StatusCode: code, Data: data})
 	} else {
-		w.ctx.JSON(code, ResponseObject{Success: true, Data: data})
+		w.ctx.JSON(code, ResponseObject{StatusCode: code, Data: data})
 	}
 }
 
 func (w *wrapper) Error(code int, err error) {
 	message := err.Error()
-	w.ctx.JSON(code, ResponseObject{Success: false, Message: message})
+	w.ctx.AbortWithStatusJSON(code, ResponseObject{StatusCode: code, Message: message})
 }

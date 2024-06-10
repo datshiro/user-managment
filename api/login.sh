@@ -2,6 +2,8 @@
 
 . "./api/.env" 
 
+API_URL=$API_URL/auth
+
 login_with_username() {
   local account=$1
   local password=$2

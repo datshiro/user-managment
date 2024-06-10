@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"app/internal/interfaces/app"
+	"app/internal/infras/app"
 	"context"
 	"fmt"
 	"log"
