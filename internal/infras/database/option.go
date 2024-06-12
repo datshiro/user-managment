@@ -26,7 +26,7 @@ func loadOpts() Opts {
 	if err := env.Parse(&c); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
-  fmt.Printf("%+v\n", c)
+	fmt.Printf("%+v\n", c)
 	return c
 
 }
@@ -34,4 +34,10 @@ func loadOpts() Opts {
 func (opt *Opts) MakeConnect() (*gorm.DB, error) {
 	db, err := gorm.Open(opt.dialector, &gorm.Config{})
 	return db, err
+}
+
+// db_type must be postgres or other database type
+func (opt *Opts) GetDSN() string {
+	dsn := "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
+	return fmt.Sprintf(dsn, opt.Host, opt.User, opt.Password, opt.DB, opt.Port, opt.SSLMode, opt.TimeZone)
 }

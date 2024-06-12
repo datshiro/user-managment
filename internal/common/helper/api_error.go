@@ -17,7 +17,7 @@ func (e APIError) WithDetails(err error) APIError {
 }
 
 func (e APIError) Error() string {
-	return fmt.Sprintf("api error: %d %s ", e.StatusCode, e.Message)
+	return fmt.Sprintf("api error: %d; %s", e.StatusCode, e.Message)
 }
 
 func NewAPIError(statusCode int, err error) APIError {
@@ -29,5 +29,9 @@ func InvalidJSON() APIError {
 }
 
 func InvalidValidationErrors(errs map[string]error) APIError {
-	return APIError{StatusCode: http.StatusUnprocessableEntity, Message: errs}
+  messages := make(map[string]string)
+  for k,v := range errs {
+    messages[k] = v.Error()
+  }
+	return APIError{StatusCode: http.StatusUnprocessableEntity, Message: messages}
 }

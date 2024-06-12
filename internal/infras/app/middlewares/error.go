@@ -19,7 +19,7 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
         return
 			} else {
         c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]any {
-          "statusCode": http.StatusInternalServerError,
+          "status_code": http.StatusInternalServerError,
           "message": "internal server error",
         })
       }

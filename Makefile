@@ -23,9 +23,9 @@ test:
 	go test -v ./... 
 
 coverage:
-	go test -v -coverprofile cover.out ./...
-	go tool cover -html cover.out -o cover.html
-	rm cover.out
+	go test -v -coverprofile cover.out ./... || true
+	go tool cover -html cover.out -o cover.html || true
+	rm cover.out || true
 
 
 mockery: 
