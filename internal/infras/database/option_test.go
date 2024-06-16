@@ -15,7 +15,7 @@ func TestOpts_GetDSN(t *testing.T) {
 		Port      string
 		SSLMode   string
 		TimeZone  string
-		dialector gorm.Dialector
+		Dialector gorm.Dialector
 	}
 	type args struct {
 		db_type string
@@ -35,7 +35,7 @@ func TestOpts_GetDSN(t *testing.T) {
         Port: "5432",
         SSLMode: "disable",
         TimeZone: "Asia/Shanghai",
-        dialector: nil,
+        Dialector: nil,
       },
       "host=localhost user=admin password=my_password dbname=mydb port=5432 sslmode=disable TimeZone=Asia/Shanghai",
 		},
@@ -50,7 +50,7 @@ func TestOpts_GetDSN(t *testing.T) {
 				Port:      tt.fields.Port,
 				SSLMode:   tt.fields.SSLMode,
 				TimeZone:  tt.fields.TimeZone,
-				dialector: tt.fields.dialector,
+				Dialector: tt.fields.Dialector,
 			}
 			if got := opt.GetDSN(); got != tt.want {
 				t.Errorf("Opts.GetDSN() = %v, want %v", got, tt.want)

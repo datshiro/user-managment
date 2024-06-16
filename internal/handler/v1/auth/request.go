@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"app/internal/models"
+	"app/internal/interfaces/repositories/models"
 	"errors"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"

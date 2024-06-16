@@ -12,7 +12,7 @@ type PostgresConnection struct {
 }
 
 func (p *PostgresConnection) Connect() (*gorm.DB, error) {
-	p.dialector = postgres.Open(p.GetDSN())
-	client, err := gorm.Open(p.dialector, &gorm.Config{})
+	p.Dialector = postgres.Open(p.GetDSN())
+	client, err := gorm.Open(p.Dialector, &gorm.Config{})
 	return client, err
 }

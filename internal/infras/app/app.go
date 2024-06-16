@@ -1,14 +1,17 @@
 package app
 
 import (
-	"app/internal/infras/database"
 	"app/internal/infras/app/middlewares"
+	"app/internal/infras/database"
+	rd "app/internal/infras/redis"
+	"app/internal/interfaces/repositories/user"
 	"app/internal/interfaces/usecases"
 	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +25,7 @@ type app struct {
 	srv    *http.Server
 	cfg    Opts
 	dbc    *gorm.DB
+	rdc    *redis.Client
 }
 
 func (s *app) Stop(ctx context.Context) error {
@@ -44,12 +48,16 @@ func NewApp(opts ...OptFunc) App {
 		},
 	}
 
-	if o.IsConnectDatabase {
+	if o.DatabaseEnable {
 		a.dbc = database.NewPostgresConnection()
 	}
+  if o.RedisEnable {
+    a.rdc = rd.NewRedis()
+  }
+	repo := user.NewRepo(a.dbc, a.rdc)
+	usecase := usecases.NewPostgresUsecase(repo)
 
 	// Routers
-	usecase := usecases.NewPostgresUsecase(a.dbc)
 	routing(engine, o.ApiPrefix, usecase)
 	return a
 }
@@ -61,4 +69,3 @@ func (s *app) Start() error {
 
 	return s.srv.ListenAndServe()
 }
-

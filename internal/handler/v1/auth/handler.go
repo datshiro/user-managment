@@ -3,8 +3,8 @@ package auth
 import (
 	"app/internal/common/helper"
 	"app/internal/common/http/response"
+	"app/internal/interfaces/repositories/models"
 	"app/internal/interfaces/usecases/user"
-	"app/internal/models"
 	"errors"
 	"net/http"
 

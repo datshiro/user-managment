@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "app/internal/models"
+	models "app/internal/interfaces/repositories/models"
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -78,126 +78,6 @@ func (_c *UserUsecase_LoginWithEmail_Call) Return(_a0 *models.User, _a1 error) *
 }
 
 func (_c *UserUsecase_LoginWithEmail_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserUsecase_LoginWithEmail_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LoginWithPhone provides a mock function with given fields: ctx, phone, password
-func (_m *UserUsecase) LoginWithPhone(ctx context.Context, phone string, password string) (*models.User, error) {
-	ret := _m.Called(ctx, phone, password)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LoginWithPhone")
-	}
-
-	var r0 *models.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok {
-		return rf(ctx, phone, password)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok {
-		r0 = rf(ctx, phone, password)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, phone, password)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UserUsecase_LoginWithPhone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoginWithPhone'
-type UserUsecase_LoginWithPhone_Call struct {
-	*mock.Call
-}
-
-// LoginWithPhone is a helper method to define mock.On call
-//   - ctx context.Context
-//   - phone string
-//   - password string
-func (_e *UserUsecase_Expecter) LoginWithPhone(ctx interface{}, phone interface{}, password interface{}) *UserUsecase_LoginWithPhone_Call {
-	return &UserUsecase_LoginWithPhone_Call{Call: _e.mock.On("LoginWithPhone", ctx, phone, password)}
-}
-
-func (_c *UserUsecase_LoginWithPhone_Call) Run(run func(ctx context.Context, phone string, password string)) *UserUsecase_LoginWithPhone_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *UserUsecase_LoginWithPhone_Call) Return(_a0 *models.User, _a1 error) *UserUsecase_LoginWithPhone_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *UserUsecase_LoginWithPhone_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserUsecase_LoginWithPhone_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LoginWithUsername provides a mock function with given fields: ctx, username, password
-func (_m *UserUsecase) LoginWithUsername(ctx context.Context, username string, password string) (*models.User, error) {
-	ret := _m.Called(ctx, username, password)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LoginWithUsername")
-	}
-
-	var r0 *models.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok {
-		return rf(ctx, username, password)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok {
-		r0 = rf(ctx, username, password)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, username, password)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UserUsecase_LoginWithUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoginWithUsername'
-type UserUsecase_LoginWithUsername_Call struct {
-	*mock.Call
-}
-
-// LoginWithUsername is a helper method to define mock.On call
-//   - ctx context.Context
-//   - username string
-//   - password string
-func (_e *UserUsecase_Expecter) LoginWithUsername(ctx interface{}, username interface{}, password interface{}) *UserUsecase_LoginWithUsername_Call {
-	return &UserUsecase_LoginWithUsername_Call{Call: _e.mock.On("LoginWithUsername", ctx, username, password)}
-}
-
-func (_c *UserUsecase_LoginWithUsername_Call) Run(run func(ctx context.Context, username string, password string)) *UserUsecase_LoginWithUsername_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *UserUsecase_LoginWithUsername_Call) Return(_a0 *models.User, _a1 error) *UserUsecase_LoginWithUsername_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *UserUsecase_LoginWithUsername_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserUsecase_LoginWithUsername_Call {
 	_c.Call.Return(run)
 	return _c
 }

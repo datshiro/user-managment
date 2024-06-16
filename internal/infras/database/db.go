@@ -1,7 +1,7 @@
 package database
 
 import (
-	"app/internal/models"
+	"app/internal/interfaces/repositories/models"
 	"log"
 
 	"gorm.io/gorm"
@@ -11,8 +11,11 @@ type DatabaseConnection interface {
 	Connect() (*gorm.DB, error)
 }
 
-func NewPostgresConnection() *gorm.DB {
-	o := loadOpts()
+func NewPostgresConnection(opts ...OptFunc) *gorm.DB {
+	o := Opts{}
+	for _, optFunc := range opts {
+		optFunc(&o)
+	}
 
 	dbConnection := &PostgresConnection{Opts: o}
 

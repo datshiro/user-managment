@@ -1,18 +1,17 @@
 package usecases
 
 import (
-	"app/internal/interfaces/repositories"
+	user_repo "app/internal/interfaces/repositories/user"
 	"app/internal/interfaces/usecases/user"
 
-	"gorm.io/gorm"
 )
 
 type Usecases struct {
   UserUC user.UserUsecase 
 }
 
-func NewPostgresUsecase(dbc *gorm.DB) Usecases {
+func NewPostgresUsecase(userRepo user_repo.UserRepository) Usecases {
   return Usecases{
-    UserUC: user.NewUseCase(repositories.NewRepo(dbc)),
+    UserUC: user.NewUseCase(userRepo),
   }
 }
