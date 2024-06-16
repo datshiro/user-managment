@@ -4,7 +4,6 @@ import (
 	"app/internal/interfaces/repositories/models"
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -34,7 +33,7 @@ func (repo *userRepo) convertMapToUse(mapUser map[string]string) (models.User, e
 		return models.User{}, err
 	}
 
-	birthDay, err := time.Parse(time.RFC3339Nano, mapUser["birhtday"])
+	birthDay, err := time.Parse(time.RFC3339Nano, mapUser["birthday"])
 	if err != nil {
 		return models.User{}, err
 	}
@@ -69,7 +68,7 @@ func (repo *userRepo) cacheUser(user models.User) error {
 		"fullname":     user.Fullname,
 		"phone_number": user.PhoneNumber,
 		"password":     user.Password,
-		"birthDay":     user.Birthday,
+		"birthday":     user.Birthday,
 		"created_at":   user.CreatedAt,
 		"updated_at":   user.UpdatedAt,
 		"latest_login": user.LatestLogin,
@@ -88,29 +87,25 @@ func (repo *userRepo) cacheUser(user models.User) error {
 }
 
 func (repo *userRepo) getUserFromCache(ctx context.Context, id int) *models.User {
-	result, err := repo.rd.HGetAll(ctx, getIdKey(uint(id))).Result()
-	if err != nil {
-		log.Println("cache: failed to get data;", err)
+	result := repo.rd.HGetAll(ctx, getIdKey(uint(id))).Val()
+	if len(result) == 0 {
 		return nil
 	}
 	user, err := repo.convertMapToUse(result)
 	if err != nil {
-		log.Println("user: failed to convert data;", err)
-		return nil
+		panic(err)
 	}
 	return &user
 }
 
 func (repo *userRepo) getUserFromCacheByEmail(ctx context.Context, email string) *models.User {
-	result, err := repo.rd.HGetAll(ctx, getEmailKey(email)).Result()
-	if err != nil {
-		log.Println("cache: failed to get data;", err)
+	result := repo.rd.HGetAll(ctx, getEmailKey(email)).Val()
+	if len(result) == 0 {
 		return nil
 	}
 	user, err := repo.convertMapToUse(result)
 	if err != nil {
-		log.Println("user: failed to convert data;", err)
-		return nil
+    panic(err)
 	}
 	return &user
 }

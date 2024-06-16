@@ -3,6 +3,7 @@ package user
 import (
 	"app/internal/interfaces/repositories/models"
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -101,12 +102,17 @@ func (suite *UserRepositoryTestSuite) BeforeTest(_ string, testName string) {
 			Fullname:    "Test Updated Fullname",
 			Email:       "test_updated@gmail.com",
 			PhoneNumber: "0937409682",
-			Birthday:    time.Now().AddDate(1996, int(time.July), 19),
-			LatestLogin: time.Now().AddDate(2024, int(time.June), 16),
+			Birthday:    time.Date(1996, time.July, 19, 0, 0, 0, 0, time.UTC),
+			LatestLogin: time.Date(2024, time.June, 16, 0, 0, 0, 0, time.UTC),
+			Model: gorm.Model{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
 		}
 
 		result := suite.db.Save(&user)
 		suite.NoError(result.Error)
+		suite.Greater(user.ID, uint(0))
 
 		idKey := getIdKey(user.ID)
 		emailKey := getEmailKey(user.Email)
@@ -118,6 +124,8 @@ func (suite *UserRepositoryTestSuite) BeforeTest(_ string, testName string) {
 		err = suite.rd.HSet(suite.ctx, idKey, "password", user.Password).Err()
 		suite.NoError(err)
 		err = suite.rd.HSet(suite.ctx, idKey, "birthday", user.Birthday).Err()
+		suite.NoError(err)
+		err = suite.rd.HSet(suite.ctx, idKey, "fullname", user.Fullname).Err()
 		suite.NoError(err)
 		err = suite.rd.HSet(suite.ctx, idKey, "latest_login", user.LatestLogin).Err()
 		suite.NoError(err)
@@ -131,6 +139,8 @@ func (suite *UserRepositoryTestSuite) BeforeTest(_ string, testName string) {
 		err = suite.rd.HSet(suite.ctx, emailKey, "email", user.Email).Err()
 		suite.NoError(err)
 		err = suite.rd.HSet(suite.ctx, emailKey, "password", user.Password).Err()
+		suite.NoError(err)
+		err = suite.rd.HSet(suite.ctx, emailKey, "fullname", user.Fullname).Err()
 		suite.NoError(err)
 		err = suite.rd.HSet(suite.ctx, emailKey, "birthday", user.Birthday).Err()
 		suite.NoError(err)
@@ -160,8 +170,8 @@ func (suite *UserRepositoryTestSuite) TestSaveNewUser() {
 		Fullname:    "Test Fullname",
 		Email:       "test@gmail.com",
 		PhoneNumber: "0937409682",
-		Birthday:    time.Now().AddDate(1996, int(time.July), 19),
-		LatestLogin: time.Now().AddDate(2024, int(time.June), 16),
+		Birthday:    time.Date(1996, 07, 19, 0, 0, 0, 0, time.UTC),
+		LatestLogin: time.Date(2024, 06, 16, 0, 0, 0, 0, time.UTC),
 	}
 	result = suite.db.Save(&newUser)
 	suite.NoError(result.Error)
@@ -175,25 +185,208 @@ func (suite *UserRepositoryTestSuite) TestSaveNewUser() {
 	result = suite.db.Find(&users)
 	suite.NoError(result.Error)
 	suite.Equal(1, len(users))
-  suite.Equal(newUser.ID, users[0].ID)
-  suite.Equal(newUser.Email, users[0].Email)
-  suite.Equal(newUser.Password, users[0].Password)
-  suite.Equal(newUser.PhoneNumber, users[0].PhoneNumber)
-  suite.Equal(newUser.Birthday, users[0].Birthday)
-  suite.Equal(newUser.LatestLogin, users[0].LatestLogin)
+	suite.Equal(newUser.ID, users[0].ID)
+	suite.Equal(newUser.Email, users[0].Email)
+	suite.Equal(newUser.Password, users[0].Password)
+	suite.Equal(newUser.PhoneNumber, users[0].PhoneNumber)
+	suite.Equal(newUser.Birthday.Unix(), users[0].Birthday.Unix())
+	suite.Equal(newUser.LatestLogin.Unix(), users[0].LatestLogin.Unix())
 }
 
-func (repo *UserRepositoryTestSuite) TestSaveUpdatedUser() {
+func (suite *UserRepositoryTestSuite) TestSaveUpdateUser() {
+	// Ensure that we have user in database
+	var user models.User
+	result := suite.db.Find(&user)
+	suite.NoError(result.Error)
+	suite.NotZero(user)
 
+	// Ensure that we have user in cache
+	idKey := getIdKey(user.ID)
+	emailKey := getEmailKey(user.Email)
+
+	res, err := suite.rd.Exists(suite.ctx, idKey).Result()
+	suite.NoError(err)
+	suite.Greater(res, int64(0))
+	res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+	suite.NoError(err)
+	suite.Greater(res, int64(0))
+
+	// Update and save user to the database
+	user.Email = "updated@gmail.com"
+	user.Fullname = "Updated fullname"
+	user.Birthday = time.Now()
+	user.Password = "updated_password"
+	user.PhoneNumber = "12345678909"
+	user.LatestLogin = time.Now()
+	repo := NewRepo(suite.db, suite.rd)
+	err = repo.SaveUser(suite.ctx, &user)
+	suite.NoError(err)
+
+	// Ensure that cache is invalidated
+	idKey = getIdKey(user.ID)
+	emailKey = getEmailKey(user.Email)
+	res, err = suite.rd.Exists(suite.ctx, idKey).Result()
+	suite.NoError(err)
+	suite.Equal(int64(0), res)
+	res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+	suite.NoError(err)
+	suite.Equal(int64(0), res)
+
+	// Ensure that updated user save to database
+	var users []models.User
+	result = suite.db.Find(&users)
+	suite.NoError(result.Error)
+	suite.Equal(1, len(users))
+	suite.Equal(user.ID, users[0].ID)
+	suite.Equal(user.Email, users[0].Email)
+	suite.Equal(user.Fullname, users[0].Fullname)
+	suite.Equal(user.Password, users[0].Password)
+	suite.Equal(user.Birthday.Unix(), users[0].Birthday.Unix())
+	suite.Equal(user.LatestLogin.Unix(), users[0].LatestLogin.Unix())
+	suite.Equal(user.PhoneNumber, users[0].PhoneNumber)
+	suite.Equal(user.CreatedAt, users[0].CreatedAt)
+	suite.Equal(user.UpdatedAt, users[0].UpdatedAt)
 }
 
-func (repo *UserRepositoryTestSuite) TestDeleteUser() {
+func (suite *UserRepositoryTestSuite) TestDeleteUser() {
+	// ensure that user have in database
+	var user models.User
+	result := suite.db.Find(&user)
+	suite.NoError(result.Error)
+	suite.NotZero(user)
 
+	// ensure that user exists in cache
+	idKey := getIdKey(user.ID)
+	emailKey := getEmailKey(user.Email)
+	res, err := suite.rd.Exists(suite.ctx, idKey).Result()
+	suite.NoError(err)
+	suite.Greater(res, int64(0))
+	res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+	suite.NoError(err)
+	suite.Greater(res, int64(0))
+
+	// delete user
+	repo := NewRepo(suite.db, suite.rd)
+	err = repo.DeleteUser(suite.ctx, int(user.ID))
+	suite.NoError(err)
+
+	// ensure that user not exists in cache
+	res, err = suite.rd.Exists(suite.ctx, idKey).Result()
+	suite.NoError(err)
+	suite.Equal(int64(0), res)
+	res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+	suite.NoError(err)
+	suite.Equal(int64(0), res)
+
+	// ensure that user not exists in database
+	users := []models.User{}
+	result = suite.db.Find(&users)
+	suite.NoError(result.Error)
+	suite.Empty(users)
 }
 
-func (repo *UserRepositoryTestSuite) TestGetUser() {
+func (suite *UserRepositoryTestSuite) TestGetUser() {
+	suite.T().Run("Get User By ID when user exist in database", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+		// Insert dbUser to database
+		dbUser := models.User{
+			Fullname:    "test fullname",
+			PhoneNumber: "0987654321",
+			Email:       "test@gmail.com",
+			Password:    "my_password",
+			Birthday:    time.Date(1996, time.July, 19, 0, 0, 0, 0, time.UTC),
+			LatestLogin: time.Now(),
+		}
+		result := suite.db.Save(&dbUser)
+		suite.NoError(result.Error)
+		suite.Greater(dbUser.ID, uint(0))
 
+		// Ensure that user not exists in cache
+		idKey := getIdKey(dbUser.ID)
+		emailKey := getEmailKey(dbUser.Email)
+		res, err := suite.rd.Exists(suite.ctx, idKey).Result()
+		suite.NoError(err)
+		suite.Equal(int64(0), res)
+		res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+		suite.NoError(err)
+		suite.Equal(int64(0), res)
+
+		// Get user from the database
+		repo := NewRepo(suite.db, suite.rd)
+		user, err := repo.GetUser(suite.ctx, int(dbUser.ID))
+		suite.NoError(err)
+		suite.NotNil(user)
+		suite.Equal(user.ID, dbUser.ID)
+		suite.Equal(user.Email, dbUser.Email)
+		suite.Equal(user.Fullname, dbUser.Fullname)
+		suite.Equal(user.Password, dbUser.Password)
+		suite.Equal(user.Birthday.Unix(), dbUser.Birthday.Unix())
+		suite.Equal(user.LatestLogin.Unix(), dbUser.LatestLogin.Unix())
+		suite.Equal(user.PhoneNumber, dbUser.PhoneNumber)
+		suite.Equal(user.CreatedAt, dbUser.CreatedAt)
+		suite.Equal(user.UpdatedAt, dbUser.UpdatedAt)
+
+		// ensure that user exists in cache
+		res, err = suite.rd.Exists(suite.ctx, idKey).Result()
+		suite.NoError(err)
+		suite.Greater(res, int64(0))
+		res, err = suite.rd.Exists(suite.ctx, emailKey).Result()
+		suite.NoError(err)
+		suite.Greater(res, int64(0))
+
+		mapUser, err := suite.rd.HGetAll(suite.ctx, idKey).Result()
+		suite.NoError(err)
+		suite.Equal(strconv.Itoa(int(dbUser.ID)), mapUser["id"])
+		suite.Equal(dbUser.Email, mapUser["email"])
+		suite.Equal(dbUser.Fullname, mapUser["fullname"])
+		suite.Equal(dbUser.Password, mapUser["password"])
+		birthday, err := time.Parse(time.RFC3339Nano, mapUser["birthday"])
+		suite.NoError(err)
+		suite.Equal(dbUser.Birthday.Unix(), birthday.Unix())
+		suite.Equal(dbUser.PhoneNumber, mapUser["phone_number"])
+		latestLogin, err := time.Parse(time.RFC3339Nano, mapUser["latest_login"])
+		suite.NoError(err)
+		suite.Equal(dbUser.LatestLogin.Unix(), latestLogin.Unix())
+	})
+
+	suite.T().Run("Get User By ID when user not exists in database", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+	})
+
+	suite.T().Run("Get User By ID when user exists in cache", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+	})
+
+	suite.T().Run("Get User By email when user exist in database", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+	})
+
+	suite.T().Run("Get User By email when user not exists in database", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+	})
+
+	suite.T().Run("Get User By email when user exists in cache", func(t *testing.T) {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+	})
 }
-func TestUserRepository(t *testing.T)  {
-  suite.Run(t, &UserRepositoryTestSuite{})
+func TestUserRepository(t *testing.T) {
+	suite.Run(t, &UserRepositoryTestSuite{})
 }
