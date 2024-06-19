@@ -89,11 +89,8 @@ func (suite *UserRepositoryTestSuite) SetupTest() {
 }
 
 func (suite *UserRepositoryTestSuite) TearDownTest() {
-	err := suite.db.Exec("DELETE FROM users;").Error
-	suite.NoError(err)
-
-	err = suite.rd.FlushAll(suite.ctx).Err()
-	suite.NoError(err)
+	suite.db.Exec("DROP TABLE IF EXISTS users CASCADE;")
+	suite.rd.FlushAll(suite.ctx).Err()
 }
 
 func (suite *UserRepositoryTestSuite) BeforeTest(_ string, testName string) {
@@ -286,7 +283,7 @@ func (suite *UserRepositoryTestSuite) TestDeleteUser() {
 }
 
 func (suite *UserRepositoryTestSuite) TestGetUser() {
-	suite.T().Run("Get User By ID when user exist in database", func(t *testing.T) {
+	suite.Run("Get User By ID when user exist in database", func() {
 		suite.T().Cleanup(func() {
 			suite.db.Exec("DELETE FROM users;")
 			suite.rd.FlushAll(suite.ctx)
@@ -352,35 +349,51 @@ func (suite *UserRepositoryTestSuite) TestGetUser() {
 		suite.Equal(dbUser.LatestLogin.Unix(), latestLogin.Unix())
 	})
 
-	suite.T().Run("Get User By ID when user not exists in database", func(t *testing.T) {
+	suite.Run("Get User By ID when user not exists in database", func() {
+		suite.T().Cleanup(func() {
+			suite.db.Exec("DELETE FROM users;")
+			suite.rd.FlushAll(suite.ctx)
+		})
+		// ensure user not exists in cache
+		res, err := suite.rd.Keys(suite.ctx, "*").Result()
+		suite.NoError(err)
+		suite.Empty(res)
+
+		// ensure user not exists in database
+    users := []models.User{}
+		result := suite.db.Find(&users)
+		suite.Equal(int64(0), result.RowsAffected)
+		suite.Empty(users)
+
+		// Get user and return nil
+		repo := NewRepo(suite.db, suite.rd)
+		user, err := repo.GetUser(suite.ctx, 1)
+		suite.Zero(user)
+		suite.Equal(nil, err)
+	})
+
+	suite.Run("Get User By ID when user exists in cache", func() {
 		suite.T().Cleanup(func() {
 			suite.db.Exec("DELETE FROM users;")
 			suite.rd.FlushAll(suite.ctx)
 		})
 	})
 
-	suite.T().Run("Get User By ID when user exists in cache", func(t *testing.T) {
+	suite.Run("Get User By email when user exist in database", func() {
 		suite.T().Cleanup(func() {
 			suite.db.Exec("DELETE FROM users;")
 			suite.rd.FlushAll(suite.ctx)
 		})
 	})
 
-	suite.T().Run("Get User By email when user exist in database", func(t *testing.T) {
+	suite.Run("Get User By email when user not exists in database", func() {
 		suite.T().Cleanup(func() {
 			suite.db.Exec("DELETE FROM users;")
 			suite.rd.FlushAll(suite.ctx)
 		})
 	})
 
-	suite.T().Run("Get User By email when user not exists in database", func(t *testing.T) {
-		suite.T().Cleanup(func() {
-			suite.db.Exec("DELETE FROM users;")
-			suite.rd.FlushAll(suite.ctx)
-		})
-	})
-
-	suite.T().Run("Get User By email when user exists in cache", func(t *testing.T) {
+	suite.Run("Get User By email when user exists in cache", func() {
 		suite.T().Cleanup(func() {
 			suite.db.Exec("DELETE FROM users;")
 			suite.rd.FlushAll(suite.ctx)
