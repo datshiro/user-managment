@@ -61,7 +61,7 @@
 				
 				<option value="file2">app/cmd/version.go (0.0%)</option>
 				
-				<option value="file3">app/internal/common/helper/api_error.go (66.7%)</option>
+				<option value="file3">app/internal/common/helper/api_error.go (44.4%)</option>
 				
 				<option value="file4">app/internal/common/http/response/options.go (100.0%)</option>
 				
@@ -83,35 +83,33 @@
 				
 				<option value="file13">app/internal/infras/database/db.go (0.0%)</option>
 				
-				<option value="file14">app/internal/infras/database/option.go (0.0%)</option>
+				<option value="file14">app/internal/infras/database/option.go (15.4%)</option>
 				
 				<option value="file15">app/internal/infras/database/postgres_connection.go (0.0%)</option>
 				
-				<option value="file16">app/internal/interfaces/repositories/user.go (0.0%)</option>
+				<option value="file16">app/internal/infras/redis/redis.go (0.0%)</option>
 				
-				<option value="file17">app/internal/interfaces/usecases/usecases.go (0.0%)</option>
+				<option value="file17">app/internal/interfaces/repositories/models/user.go (63.6%)</option>
 				
-				<option value="file18">app/internal/interfaces/usecases/user/user.go (0.0%)</option>
+				<option value="file18">app/internal/interfaces/repositories/user/cache.go (81.2%)</option>
 				
-				<option value="file19">app/internal/mocks/app/App.go (0.0%)</option>
+				<option value="file19">app/internal/interfaces/repositories/user/user.go (82.9%)</option>
 				
-				<option value="file20">app/internal/mocks/app/OptFunc.go (0.0%)</option>
+				<option value="file20">app/internal/interfaces/usecases/usecases.go (100.0%)</option>
 				
-				<option value="file21">app/internal/mocks/app/Server.go (0.0%)</option>
+				<option value="file21">app/internal/interfaces/usecases/user/user.go (38.9%)</option>
 				
-				<option value="file22">app/internal/mocks/repositories/UserRepository.go (0.0%)</option>
+				<option value="file22">app/internal/mocks/repositories/user/UserRepository.go (0.0%)</option>
 				
-				<option value="file23">app/internal/mocks/usecases/user/UserUsecase.go (11.2%)</option>
+				<option value="file23">app/internal/mocks/usecases/user/UserUsecase.go (19.2%)</option>
 				
-				<option value="file24">app/internal/models/user.go (0.0%)</option>
+				<option value="file24">app/internal/utils/password.go (50.0%)</option>
 				
-				<option value="file25">app/internal/utils/password.go (0.0%)</option>
+				<option value="file25">app/internal/utils/request.go (0.0%)</option>
 				
-				<option value="file26">app/internal/utils/request.go (0.0%)</option>
+				<option value="file26">app/internal/utils/response.go (0.0%)</option>
 				
-				<option value="file27">app/internal/utils/response.go (0.0%)</option>
-				
-				<option value="file28">app/main.go (0.0%)</option>
+				<option value="file27">app/main.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -266,29 +264,29 @@ type APIError struct {
         details    error 
 }
 
-func (e APIError) WithDetails(err error) APIError <span class="cov0" title="0">{
+func (e APIError) WithDetails(err error) APIError <span class="cov8" title="1">{
         e.details = err
         return e
 }</span>
 
-func (e APIError) Error() string <span class="cov0" title="0">{
-        return fmt.Sprintf("api error: %d %s ", e.StatusCode, e.Message)
+func (e APIError) Error() string <span class="cov8" title="1">{
+        return fmt.Sprintf("api error: %d; %s", e.StatusCode, e.Message)
 }</span>
 
 func NewAPIError(statusCode int, err error) APIError <span class="cov8" title="1">{
         return APIError{StatusCode: statusCode, Message: err.Error()}
 }</span>
 
-func InvalidJSON() APIError <span class="cov8" title="1">{
+func InvalidJSON() APIError <span class="cov0" title="0">{
         return NewAPIError(http.StatusBadRequest, fmt.Errorf("invalid request JSON data"))
 }</span>
 
-func InvalidValidationErrors(errs map[string]error) APIError <span class="cov8" title="1">{
+func InvalidValidationErrors(errs map[string]error) APIError <span class="cov0" title="0">{
   messages := make(map[string]string)
-  for k,v := range errs </span><span class="cov8" title="1">{
+  for k,v := range errs </span><span class="cov0" title="0">{
     messages[k] = v.Error()
   }</span>
-        <span class="cov8" title="1">return APIError{StatusCode: http.StatusUnprocessableEntity, Message: messages}</span>
+        <span class="cov0" title="0">return APIError{StatusCode: http.StatusUnprocessableEntity, Message: messages}</span>
 }
 </pre>
 		
@@ -457,8 +455,8 @@ var (
 import (
         "app/internal/common/helper"
         "app/internal/common/http/response"
+        "app/internal/interfaces/repositories/models"
         "app/internal/interfaces/usecases/user"
-        "app/internal/models"
         "errors"
         "net/http"
 
@@ -538,7 +536,7 @@ func (h handler) HandleRegister(c *gin.Context) <span class="cov8" title="1">{
 		<pre class="file" id="file8" style="display: none">package auth
 
 import (
-        "app/internal/models"
+        "app/internal/interfaces/repositories/models"
         "errors"
 
         validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -586,14 +584,17 @@ func ValidateRegisterRequest(user *models.User) map[string]error <span class="co
 		<pre class="file" id="file9" style="display: none">package app
 
 import (
-        "app/internal/infras/database"
         "app/internal/infras/app/middlewares"
+        "app/internal/infras/database"
+        rd "app/internal/infras/redis"
+        "app/internal/interfaces/repositories/user"
         "app/internal/interfaces/usecases"
         "context"
         "fmt"
         "net/http"
 
         "github.com/gin-gonic/gin"
+        "github.com/redis/go-redis/v9"
         "gorm.io/gorm"
 )
 
@@ -607,6 +608,7 @@ type app struct {
         srv    *http.Server
         cfg    Opts
         dbc    *gorm.DB
+        rdc    *redis.Client
 }
 
 func (s *app) Stop(ctx context.Context) error <span class="cov0" title="0">{
@@ -629,12 +631,16 @@ func NewApp(opts ...OptFunc) App <span class="cov0" title="0">{
                 },
         }
 
-        if o.IsConnectDatabase </span><span class="cov0" title="0">{
+        if o.DatabaseEnable </span><span class="cov0" title="0">{
                 a.dbc = database.NewPostgresConnection()
         }</span>
+  <span class="cov0" title="0">if o.RedisEnable </span><span class="cov0" title="0">{
+    a.rdc = rd.NewRedis()
+  }</span>
+        <span class="cov0" title="0">repo := user.NewRepo(a.dbc, a.rdc)
+        usecase := usecases.NewPostgresUsecase(repo)
 
         // Routers
-        <span class="cov0" title="0">usecase := usecases.NewPostgresUsecase(a.dbc)
         routing(engine, o.ApiPrefix, usecase)
         return a</span>
 }
@@ -646,7 +652,6 @@ func (s *app) Start() error <span class="cov0" title="0">{
 
         return s.srv.ListenAndServe()
 }</span>
-
 </pre>
 		
 		<pre class="file" id="file10" style="display: none">package middlewares
@@ -690,18 +695,20 @@ import (
 )
 
 type Opts struct {
-        Port              int    `env:"PORT" envDefault:"3333" json:"port"`
-        RedisUrl          string `env:"REDIS_URL" json:"redis_url"`
-        ApiPrefix         string `env:"API_PREFIX" envPrefix:"api" json:"api_prefix"`
-        IsConnectDatabase bool   `env:"IS_CONNECT_DATABASE" envDefault:"false"`
+        Port                  int    `env:"PORT" envDefault:"3333"`
+        ApiPrefix             string `env:"API_PREFIX" envPrefix:"api"`
+        DatabaseEnable        bool   `env:"DATABASE_ENABLE" envDefault:"false"`
+        RedisEnable           bool   `env:"REDIS_ENABLE" envDefault:"false"`
+        RedisConnectionString string `env:"REDIS_CONNECTION_STRING"`
 }
 
 func defaultOpts() Opts <span class="cov0" title="0">{
         c := Opts{
-                Port:      3000,
-                RedisUrl:  "redis://0.0.0.0:6379",
-                ApiPrefix: "api",
-    IsConnectDatabase: false,
+                Port:                  3000,
+                RedisConnectionString: "redis://0.0.0.0:6379",
+                ApiPrefix:             "api",
+                DatabaseEnable:        false,
+                RedisEnable:           false,
         }
 
         if err := env.Parse(&amp;c); err != nil </span><span class="cov0" title="0">{
@@ -722,7 +729,7 @@ func WithPort(port int) OptFunc <span class="cov0" title="0">{
 
 func WithDatabase(isConnectDatabase bool) OptFunc <span class="cov0" title="0">{
         return func(c *Opts) </span><span class="cov0" title="0">{
-                c.IsConnectDatabase = isConnectDatabase
+                c.DatabaseEnable = isConnectDatabase
         }</span>
 }
 </pre>
@@ -753,7 +760,7 @@ func routing(engine *gin.Engine, apiPrefix string, usecase usecases.Usecases) <s
 		<pre class="file" id="file13" style="display: none">package database
 
 import (
-        "app/internal/models"
+        "app/internal/interfaces/repositories/models"
         "log"
 
         "gorm.io/gorm"
@@ -763,10 +770,13 @@ type DatabaseConnection interface {
         Connect() (*gorm.DB, error)
 }
 
-func NewPostgresConnection() *gorm.DB <span class="cov0" title="0">{
-        o := loadOpts()
+func NewPostgresConnection(opts ...OptFunc) *gorm.DB <span class="cov0" title="0">{
+        o := Opts{}
+        for _, optFunc := range opts </span><span class="cov0" title="0">{
+                optFunc(&amp;o)
+        }</span>
 
-        dbConnection := &amp;PostgresConnection{Opts: o}
+        <span class="cov0" title="0">dbConnection := &amp;PostgresConnection{Opts: o}
 
         postgresDbc, err := dbConnection.Connect()
         if err != nil </span><span class="cov0" title="0">{
@@ -808,32 +818,49 @@ type Opts struct {
         Port      string `env:"DATABASE_PORT"`
         SSLMode   string `env:"DATABASE_SSL_MODE" default:"disable"`
         TimeZone  string `env:"DATABASE_TIME_ZONE" default:"Asia/Shanghai"`
-        dialector gorm.Dialector
+        Dialector gorm.Dialector
 }
 type OptFunc func(*Opts)
 
-func loadOpts() Opts <span class="cov0" title="0">{
+func LoadOpts() Opts <span class="cov0" title="0">{
         c := Opts{}
 
         if err := env.Parse(&amp;c); err != nil </span><span class="cov0" title="0">{
                 log.Fatalf("%+v\n", err)
         }</span>
-  <span class="cov0" title="0">fmt.Printf("%+v\n", c)
+        <span class="cov0" title="0">fmt.Printf("%+v\n", c)
         return c</span>
 
 }
 
-func (opt *Opts) MakeConnect() (*gorm.DB, error) <span class="cov0" title="0">{
-        db, err := gorm.Open(opt.dialector, &amp;gorm.Config{})
-        return db, err
+// db_type must be postgres or other database type
+func (opt *Opts) GetDSN() string <span class="cov8" title="1">{
+        dsn := "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
+        return fmt.Sprintf(dsn, opt.Host, opt.User, opt.Password, opt.DB, opt.Port, opt.SSLMode, opt.TimeZone)
 }</span>
+
+func WithUser(user string) OptFunc <span class="cov0" title="0">{
+  return func(o *Opts) </span><span class="cov0" title="0">{
+    o.User = user
+  }</span>
+}
+
+func WithPassword(pass string) OptFunc <span class="cov0" title="0">{
+  return func(o *Opts) </span><span class="cov0" title="0">{
+    o.Password = pass
+  }</span>
+}
+
+func WithDB(db_name string) OptFunc <span class="cov0" title="0">{
+  return func(o *Opts) </span><span class="cov0" title="0">{
+    o.DB = db_name
+  }</span>
+}
 </pre>
 		
 		<pre class="file" id="file15" style="display: none">package database
 
 import (
-        "fmt"
-
         "gorm.io/driver/postgres"
         "gorm.io/gorm"
 )
@@ -845,541 +872,382 @@ type PostgresConnection struct {
 }
 
 func (p *PostgresConnection) Connect() (*gorm.DB, error) <span class="cov0" title="0">{
-        dsn := "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
-        p.dialector = postgres.Open(fmt.Sprintf(dsn, p.Host, p.User, p.Password, p.DB, p.Port, p.SSLMode, p.TimeZone))
-        client, err := p.MakeConnect()
+        p.Dialector = postgres.Open(p.GetDSN())
+        client, err := gorm.Open(p.Dialector, &amp;gorm.Config{})
         return client, err
 }</span>
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package repositories
+		<pre class="file" id="file16" style="display: none">package redis
 
-import (
-        "app/internal/consts"
-        "app/internal/models"
-        "app/internal/utils"
-        "context"
-        "errors"
-        "fmt"
-        "time"
+import "github.com/redis/go-redis/v9"
 
-        "gorm.io/gorm"
-)
-
-type UserRepository interface {
-        CreateUser(ctx context.Context, userObject *models.User) (*models.User, error)
-        GetUserByID(ctx context.Context, id int) (*models.User, error)
-        UpdateLastLogin(ctx context.Context, id uint) (bool, error)
-        GetUserByEmail(ctx context.Context, email string, password string) (*models.User, error)
-        GetUserByUsername(ctx context.Context, username string, password string) (*models.User, error)
-        GetUserByPhone(ctx context.Context, phone string, password string) (*models.User, error)
-}
-
-func NewRepo(dbc *gorm.DB) UserRepository <span class="cov0" title="0">{
-        return &amp;userRepo{dbc}
-}</span>
-
-type userRepo struct {
-        dbc *gorm.DB
-}
-
-func (repo *userRepo) CreateUser(ctx context.Context, data *models.User) (*models.User, error) <span class="cov0" title="0">{
-        tx := repo.dbc.Begin()
-        defer func() </span><span class="cov0" title="0">{
-                if r := recover(); r != nil </span><span class="cov0" title="0">{
-                        tx.Rollback()
-                }</span>
-        }()
-
-        // Check user existence
-        <span class="cov0" title="0">var existed bool
-        err := tx.Model(&amp;models.User{}).
-                Select("count(*) &gt; 0").
-                Where("username = ? OR email = ? OR phone_number = ?", data.Username, data.Email, data.PhoneNumber).
-                Find(&amp;existed).
-                Error
+func NewRedis(opts ...OptFunc) *redis.Client <span class="cov0" title="0">{
+        o := Opts{}
+        connOpts, err := redis.ParseURL(o.ConnectionString)
         if err != nil </span><span class="cov0" title="0">{
-                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
-                        return nil, consts.NewError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
-                }</span> else<span class="cov0" title="0"> {
-                        return nil, consts.NewError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
-                }</span>
+                panic(err)</span>
         }
-        <span class="cov0" title="0">if existed </span><span class="cov0" title="0">{
-                return nil, consts.NewError(fmt.Errorf("user already existed")).WithTag("Method", "CreateUser")
-        }</span>
-
-        <span class="cov0" title="0">result := tx.Create(data)
-        if result.Error != nil </span><span class="cov0" title="0">{
-                tx.Rollback()
-                return nil, result.Error
-        }</span>
-        <span class="cov0" title="0">if err := tx.Commit().Error; err != nil </span><span class="cov0" title="0">{
-                return nil, consts.NewError(fmt.Errorf("something went wrong. Please try again; %+v", err)).WithTag("Method", "Commit")
-        }</span>
-        <span class="cov0" title="0">return data, nil</span>
-}
-
-func (repo *userRepo) GetUserByID(ctx context.Context, id int) (*models.User, error) <span class="cov0" title="0">{
-        user := &amp;models.User{}
-        result := repo.dbc.First(user, id)
-        if result.Error != nil </span><span class="cov0" title="0">{
-                return nil, result.Error
-        }</span>
-        <span class="cov0" title="0">return user, nil</span>
-}
-
-func (repo *userRepo) UpdateLastLogin(ctx context.Context, id uint) (bool, error) <span class="cov0" title="0">{
-        result := repo.dbc.Model(&amp;models.User{}).Where("id = ?", id).Update("latest_login", time.Now())
-        if result.Error != nil </span><span class="cov0" title="0">{
-                return false, result.Error
-        }</span>
-        <span class="cov0" title="0">return true, nil</span>
-}
-
-func (repo *userRepo) GetUserByEmail(ctx context.Context, email string, password string) (*models.User, error) <span class="cov0" title="0">{
-        user := &amp;models.User{}
-        result := repo.dbc.First(user, "email = ?", email)
-        if result.Error != nil </span><span class="cov0" title="0">{
-                return nil, result.Error
-        }</span>
-        <span class="cov0" title="0">if ok := utils.CheckPasswordHash(password, user.Password); !ok </span><span class="cov0" title="0">{
-                return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
-        }</span>
-        <span class="cov0" title="0">return user, nil</span>
-}
-
-func (repo *userRepo) GetUserByPhone(ctx context.Context, phone string, password string) (*models.User, error) <span class="cov0" title="0">{
-        user := &amp;models.User{}
-        result := repo.dbc.First(user, "phone_number = ?", phone)
-        if result.Error != nil </span><span class="cov0" title="0">{
-                return nil, result.Error
-        }</span>
-        <span class="cov0" title="0">if ok := utils.CheckPasswordHash(password, user.Password); !ok </span><span class="cov0" title="0">{
-                return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
-        }</span>
-        <span class="cov0" title="0">return user, nil</span>
-}
-
-func (repo *userRepo) GetUserByUsername(ctx context.Context, username string, password string) (*models.User, error) <span class="cov0" title="0">{
-        user := &amp;models.User{}
-        result := repo.dbc.First(user, "username = ?", username)
-        if result.Error != nil </span><span class="cov0" title="0">{
-                return nil, result.Error
-        }</span>
-        <span class="cov0" title="0">if ok := utils.CheckPasswordHash(password, user.Password); !ok </span><span class="cov0" title="0">{
-                return nil, consts.NewError(fmt.Errorf("credential verification failure; wrong password")).WithTag("Method", "GetUserByEmail")
-        }</span>
-        <span class="cov0" title="0">return user, nil</span>
+        <span class="cov0" title="0">return redis.NewClient(connOpts)</span>
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package usecases
+		<pre class="file" id="file17" style="display: none">package models
 
 import (
-        "app/internal/interfaces/repositories"
-        "app/internal/interfaces/usecases/user"
+        "app/internal/utils"
+        "errors"
+        "time"
 
+        "golang.org/x/crypto/bcrypt"
         "gorm.io/gorm"
 )
 
-type Usecases struct {
-  UserUC user.UserUsecase 
+var (
+  ErrPasswordTooLong = errors.New("password: too long for hashing")
+  ErrPasswordTooShort = errors.New("password: too short for hashing")
+  ErrPasswordHash = errors.New("password: hash failed")
+)
+
+type User struct {
+        gorm.Model
+        Fullname    string
+        PhoneNumber string `gorm:"not_null"`
+        Email       string `gorm:"unique"`
+        Password    string `gorm:"not_null"`
+        Birthday    time.Time
+        LatestLogin time.Time
 }
 
-func NewPostgresUsecase(dbc *gorm.DB) Usecases <span class="cov0" title="0">{
-  return Usecases{
-    UserUC: user.NewUseCase(repositories.NewRepo(dbc)),
-  }
+// Hash password before insert into database
+func (u *User) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
+  if len(u.Password) &lt; 7 </span><span class="cov8" title="1">{
+    return ErrPasswordTooShort
+  }</span>
+        <span class="cov8" title="1">u.Password, err = utils.HashPassword(u.Password)
+
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, bcrypt.ErrPasswordTooLong) </span><span class="cov8" title="1">{
+                        return ErrPasswordTooLong
+                }</span>
+                <span class="cov0" title="0">if errors.Is(err, bcrypt.ErrHashTooShort) </span><span class="cov0" title="0">{
+                        return ErrPasswordTooShort
+                }</span>
+          <span class="cov0" title="0">return err</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (u *User) ComparePassword(password string) bool <span class="cov0" title="0">{
+  return utils.CheckPasswordHash(password, u.Password)
 }</span>
 </pre>
 		
 		<pre class="file" id="file18" style="display: none">package user
 
 import (
-        "app/internal/interfaces/repositories"
-        "app/internal/models"
+        "app/internal/interfaces/repositories/models"
         "context"
+        "fmt"
+        "strconv"
+        "time"
+
+        "gorm.io/gorm"
+)
+
+func getIdKey(id uint) string <span class="cov8" title="1">{
+        return fmt.Sprintf("users:%d", id)
+}</span>
+func getEmailKey(email string) string <span class="cov8" title="1">{
+        return fmt.Sprintf("users:%s", email)
+}</span>
+
+func (repo *userRepo) convertMapToUse(mapUser map[string]string) (models.User, error) <span class="cov8" title="1">{
+        userID, err := strconv.Atoi(mapUser["id"])
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">createdAt, err := time.Parse(time.RFC3339Nano, mapUser["created_at"])
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">updatedAt, err := time.Parse(time.RFC3339Nano, mapUser["updated_at"])
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">birthDay, err := time.Parse(time.RFC3339Nano, mapUser["birthday"])
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">latestLogin, err := time.Parse(time.RFC3339Nano, mapUser["latest_login"])
+        if err != nil </span><span class="cov0" title="0">{
+                return models.User{}, err
+        }</span>
+
+        <span class="cov8" title="1">user := models.User{
+                Model: gorm.Model{
+                        ID:        uint(userID),
+                        CreatedAt: createdAt,
+                        UpdatedAt: updatedAt,
+                },
+                Fullname:    mapUser["fullname"],
+                PhoneNumber: mapUser["phone_number"],
+                Email:       mapUser["email"],
+                Password:    mapUser["password"],
+                Birthday:    birthDay,
+                LatestLogin: latestLogin,
+        }
+        return user, nil</span>
+}
+
+func (repo *userRepo) cacheUser(user models.User) error <span class="cov8" title="1">{
+        idKey := getIdKey(user.ID)
+        emailKey := getEmailKey(user.Email)
+        cachedUser := map[string]any{
+                "id":           user.ID,
+                "email":        user.Email,
+                "fullname":     user.Fullname,
+                "phone_number": user.PhoneNumber,
+                "password":     user.Password,
+                "birthday":     user.Birthday,
+                "created_at":   user.CreatedAt,
+                "updated_at":   user.UpdatedAt,
+                "latest_login": user.LatestLogin,
+        }
+
+        for key, value := range cachedUser </span><span class="cov8" title="1">{
+                if err := repo.rd.HSet(context.Background(), idKey, key, value).Err(); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+                <span class="cov8" title="1">if err := repo.rd.HSet(context.Background(), emailKey, key, value).Err(); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *userRepo) getUserFromCache(ctx context.Context, id int) *models.User <span class="cov8" title="1">{
+        result := repo.rd.HGetAll(ctx, getIdKey(uint(id))).Val()
+        if len(result) == 0 </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">user, err := repo.convertMapToUse(result)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+        <span class="cov8" title="1">return &amp;user</span>
+}
+
+func (repo *userRepo) getUserFromCacheByEmail(ctx context.Context, email string) *models.User <span class="cov8" title="1">{
+        result := repo.rd.HGetAll(ctx, getEmailKey(email)).Val()
+        if len(result) == 0 </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">user, err := repo.convertMapToUse(result)
+        if err != nil </span><span class="cov0" title="0">{
+    panic(err)</span>
+        }
+        <span class="cov8" title="1">return &amp;user</span>
+}
+
+func (repo *userRepo) deleteFromCache(ctx context.Context, user models.User) error <span class="cov8" title="1">{
+        keysToDelete := make([]string, 0)
+        if user.ID &gt; 0 </span><span class="cov8" title="1">{
+                keysToDelete = append(keysToDelete, getIdKey(user.ID))
+        }</span>
+        <span class="cov8" title="1">if user.Email != "" </span><span class="cov8" title="1">{
+                keysToDelete = append(keysToDelete, getEmailKey(user.Email))
+        }</span>
+        <span class="cov8" title="1">return repo.rd.Del(ctx, keysToDelete...).Err()</span>
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package user
+
+import (
+        "app/internal/interfaces/repositories/models"
+        "context"
+        "errors"
+        "github.com/redis/go-redis/v9"
+
+        "gorm.io/gorm"
+)
+
+type UserRepository interface {
+        SaveUser(ctx context.Context, user *models.User) error
+        GetUser(ctx context.Context, id int) (*models.User, error)
+        GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+        DeleteUser(ctx context.Context, id int) error
+}
+
+func NewRepo(dbc *gorm.DB, rd *redis.Client) UserRepository <span class="cov8" title="1">{
+        return &amp;userRepo{dbc, rd}
+}</span>
+
+type userRepo struct {
+        dbc *gorm.DB
+        rd  *redis.Client
+}
+
+func (repo *userRepo) SaveUser(ctx context.Context, data *models.User) error <span class="cov8" title="1">{
+        // remove from cache
+        if err := repo.deleteFromCache(ctx, *data); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // save user
+        <span class="cov8" title="1">result := repo.dbc.Save(&amp;data)
+        if result.Error != nil </span><span class="cov0" title="0">{
+                return result.Error
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (repo *userRepo) GetUser(ctx context.Context, id int) (*models.User, error) <span class="cov8" title="1">{
+        // get from cache
+        cachedUser := repo.getUserFromCache(ctx, id)
+        if cachedUser != nil </span><span class="cov8" title="1">{
+                return cachedUser, nil
+        }</span>
+
+        // Get user from database
+        <span class="cov8" title="1">user := models.User{Model: gorm.Model{ID: uint(id)}}
+        result := repo.dbc.First(&amp;user)
+        if result.Error != nil </span><span class="cov8" title="1">{
+                if errors.Is(result.Error, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return nil, nil
+                }</span>
+                <span class="cov0" title="0">return nil, result.Error</span>
+        }
+
+        // cache retrieved user
+        <span class="cov8" title="1">if err := repo.cacheUser(user); err != nil </span><span class="cov0" title="0">{
+                return &amp;user, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (repo *userRepo) GetUserByEmail(ctx context.Context, email string) (*models.User, error) <span class="cov8" title="1">{
+        // Get User from cache
+        cachedUser := repo.getUserFromCacheByEmail(ctx, email)
+        if cachedUser != nil </span><span class="cov8" title="1">{
+                return cachedUser, nil
+        }</span>
+
+        // Get from database
+        <span class="cov8" title="1">user := models.User{Email: email}
+        result := repo.dbc.First(&amp;user)
+        if result.Error != nil </span><span class="cov8" title="1">{
+                return nil, result.Error
+        }</span>
+
+        // cache retreived user
+        <span class="cov8" title="1">if err := repo.cacheUser(user); err != nil </span><span class="cov0" title="0">{
+                return &amp;user, err
+        }</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
+}
+
+func (repo *userRepo) DeleteUser(ctx context.Context, id int) error <span class="cov8" title="1">{
+        // Delete from cache
+        cachedUser := repo.getUserFromCache(ctx, id)
+        if cachedUser != nil </span><span class="cov8" title="1">{
+                if err := repo.deleteFromCache(ctx, *cachedUser); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">result := repo.dbc.Delete(&amp;models.User{}, id)
+        return result.Error</span>
+}
+</pre>
+		
+		<pre class="file" id="file20" style="display: none">package usecases
+
+import (
+        user_repo "app/internal/interfaces/repositories/user"
+        "app/internal/interfaces/usecases/user"
+
+)
+
+type Usecases struct {
+  UserUC user.UserUsecase 
+}
+
+func NewPostgresUsecase(userRepo user_repo.UserRepository) Usecases <span class="cov8" title="1">{
+  return Usecases{
+    UserUC: user.NewUseCase(userRepo),
+  }
+}</span>
+</pre>
+		
+		<pre class="file" id="file21" style="display: none">package user
+
+import (
+        "app/internal/interfaces/repositories/models"
+        "app/internal/interfaces/repositories/user"
+        "context"
+        "errors"
+        "time"
+
+        "gorm.io/gorm"
+)
+
+var (
+        ErrInvalidPassword = errors.New("login: password is incorrect")
+  ErrUserExisted = errors.New("create: user is already existed")
 )
 
 type UserUsecase interface {
         LoginWithEmail(ctx context.Context, email string, password string) (*models.User, error)
-        LoginWithUsername(ctx context.Context, username string, password string) (*models.User, error)
-        LoginWithPhone(ctx context.Context, phone string, password string) (*models.User, error)
         RegisterUser(ctx context.Context, data *models.User) (*models.User, error)
 }
 
-func NewUseCase(repo repositories.UserRepository) UserUsecase <span class="cov0" title="0">{
+func NewUseCase(repo user.UserRepository) UserUsecase <span class="cov8" title="1">{
         return &amp;userUsecase{repo: repo}
 }</span>
 
 type userUsecase struct {
-        repo repositories.UserRepository
+        repo user.UserRepository
 }
 
 func (uc *userUsecase) LoginWithEmail(ctx context.Context, email string, password string) (*models.User, error) <span class="cov0" title="0">{
-        user, err := uc.repo.GetUserByEmail(ctx, email, password)
+        user, err := uc.repo.GetUserByEmail(ctx, email)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">_, _ = uc.repo.UpdateLastLogin(ctx, user.ID)
+
+        <span class="cov0" title="0">if !user.ComparePassword(password) </span><span class="cov0" title="0">{
+                return nil, ErrInvalidPassword
+        }</span>
+
+        <span class="cov0" title="0">user.LatestLogin = time.Now()
+        err = uc.repo.SaveUser(ctx, user)
         return user, err</span>
 }
 
-func (uc *userUsecase) LoginWithUsername(ctx context.Context, username string, password string) (_ *models.User, _ error) <span class="cov0" title="0">{
-        user, err := uc.repo.GetUserByUsername(ctx, username, password)
-        if err != nil </span><span class="cov0" title="0">{
+func (uc *userUsecase) RegisterUser(ctx context.Context, data *models.User) (*models.User, error) <span class="cov8" title="1">{
+        // Check if user existed
+        u, err := uc.repo.GetUserByEmail(ctx, data.Email)
+        if err != nil </span><span class="cov8" title="1">{
+                if !errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        }
+  <span class="cov8" title="1">if u != nil </span><span class="cov0" title="0">{
+    return nil, ErrUserExisted
+  }</span>
+
+        <span class="cov8" title="1">if err = uc.repo.SaveUser(ctx, data); err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">_, _ = uc.repo.UpdateLastLogin(ctx, user.ID)
-        return user, err</span>
-}
-
-func (uc *userUsecase) LoginWithPhone(ctx context.Context, phone string, password string) (_ *models.User, _ error) <span class="cov0" title="0">{
-        user, err := uc.repo.GetUserByPhone(ctx, phone, password)
-        if err != nil </span><span class="cov0" title="0">{
-                return nil, err
-        }</span>
-        <span class="cov0" title="0">_, _ = uc.repo.UpdateLastLogin(ctx, user.ID)
-        return user, err</span>
-}
-
-func (uc *userUsecase) RegisterUser(ctx context.Context, data *models.User) (*models.User, error) <span class="cov0" title="0">{
-        // Hash Password implemented at BeforeCreate hook
-        user, err := uc.repo.CreateUser(ctx, data)
-        if err != nil </span><span class="cov0" title="0">{
-                return nil, err
-        }</span>
-        <span class="cov0" title="0">return user, nil</span>
-}
-</pre>
-		
-		<pre class="file" id="file19" style="display: none">// Code generated by mockery. DO NOT EDIT.
-
-package mocks
-
-import (
-        context "context"
-
-        mock "github.com/stretchr/testify/mock"
-)
-
-// App is an autogenerated mock type for the App type
-type App struct {
-        mock.Mock
-}
-
-type App_Expecter struct {
-        mock *mock.Mock
-}
-
-func (_m *App) EXPECT() *App_Expecter <span class="cov0" title="0">{
-        return &amp;App_Expecter{mock: &amp;_m.Mock}
-}</span>
-
-// Start provides a mock function with given fields:
-func (_m *App) Start() error <span class="cov0" title="0">{
-        ret := _m.Called()
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for Start")</span>
-        }
-
-        <span class="cov0" title="0">var r0 error
-        if rf, ok := ret.Get(0).(func() error); ok </span><span class="cov0" title="0">{
-                r0 = rf()
-        }</span> else<span class="cov0" title="0"> {
-                r0 = ret.Error(0)
-        }</span>
-
-        <span class="cov0" title="0">return r0</span>
-}
-
-// App_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
-type App_Start_Call struct {
-        *mock.Call
-}
-
-// Start is a helper method to define mock.On call
-func (_e *App_Expecter) Start() *App_Start_Call <span class="cov0" title="0">{
-        return &amp;App_Start_Call{Call: _e.mock.On("Start")}
-}</span>
-
-func (_c *App_Start_Call) Run(run func()) *App_Start_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run()
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *App_Start_Call) Return(_a0 error) *App_Start_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0)
-        return _c
-}</span>
-
-func (_c *App_Start_Call) RunAndReturn(run func() error) *App_Start_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// Stop provides a mock function with given fields: ctx
-func (_m *App) Stop(ctx context.Context) error <span class="cov0" title="0">{
-        ret := _m.Called(ctx)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for Stop")</span>
-        }
-
-        <span class="cov0" title="0">var r0 error
-        if rf, ok := ret.Get(0).(func(context.Context) error); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx)
-        }</span> else<span class="cov0" title="0"> {
-                r0 = ret.Error(0)
-        }</span>
-
-        <span class="cov0" title="0">return r0</span>
-}
-
-// App_Stop_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Stop'
-type App_Stop_Call struct {
-        *mock.Call
-}
-
-// Stop is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *App_Expecter) Stop(ctx interface{}) *App_Stop_Call <span class="cov0" title="0">{
-        return &amp;App_Stop_Call{Call: _e.mock.On("Stop", ctx)}
-}</span>
-
-func (_c *App_Stop_Call) Run(run func(ctx context.Context)) *App_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *App_Stop_Call) Return(_a0 error) *App_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0)
-        return _c
-}</span>
-
-func (_c *App_Stop_Call) RunAndReturn(run func(context.Context) error) *App_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// NewApp creates a new instance of App. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewApp(t interface {
-        mock.TestingT
-        Cleanup(func())
-}) *App <span class="cov0" title="0">{
-        mock := &amp;App{}
-        mock.Mock.Test(t)
-
-        t.Cleanup(func() </span><span class="cov0" title="0">{ mock.AssertExpectations(t) }</span>)
-
-        <span class="cov0" title="0">return mock</span>
-}
-</pre>
-		
-		<pre class="file" id="file20" style="display: none">// Code generated by mockery. DO NOT EDIT.
-
-package mocks
-
-import (
-        app "app/internal/infras/app"
-
-        mock "github.com/stretchr/testify/mock"
-)
-
-// OptFunc is an autogenerated mock type for the OptFunc type
-type OptFunc struct {
-        mock.Mock
-}
-
-type OptFunc_Expecter struct {
-        mock *mock.Mock
-}
-
-func (_m *OptFunc) EXPECT() *OptFunc_Expecter <span class="cov0" title="0">{
-        return &amp;OptFunc_Expecter{mock: &amp;_m.Mock}
-}</span>
-
-// Execute provides a mock function with given fields: _a0
-func (_m *OptFunc) Execute(_a0 *app.Opts) <span class="cov0" title="0">{
-        _m.Called(_a0)
-}</span>
-
-// OptFunc_Execute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Execute'
-type OptFunc_Execute_Call struct {
-        *mock.Call
-}
-
-// Execute is a helper method to define mock.On call
-//   - _a0 *app.Opts
-func (_e *OptFunc_Expecter) Execute(_a0 interface{}) *OptFunc_Execute_Call <span class="cov0" title="0">{
-        return &amp;OptFunc_Execute_Call{Call: _e.mock.On("Execute", _a0)}
-}</span>
-
-func (_c *OptFunc_Execute_Call) Run(run func(_a0 *app.Opts)) *OptFunc_Execute_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(*app.Opts))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *OptFunc_Execute_Call) Return() *OptFunc_Execute_Call <span class="cov0" title="0">{
-        _c.Call.Return()
-        return _c
-}</span>
-
-func (_c *OptFunc_Execute_Call) RunAndReturn(run func(*app.Opts)) *OptFunc_Execute_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// NewOptFunc creates a new instance of OptFunc. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewOptFunc(t interface {
-        mock.TestingT
-        Cleanup(func())
-}) *OptFunc <span class="cov0" title="0">{
-        mock := &amp;OptFunc{}
-        mock.Mock.Test(t)
-
-        t.Cleanup(func() </span><span class="cov0" title="0">{ mock.AssertExpectations(t) }</span>)
-
-        <span class="cov0" title="0">return mock</span>
-}
-</pre>
-		
-		<pre class="file" id="file21" style="display: none">// Code generated by mockery. DO NOT EDIT.
-
-package mocks
-
-import (
-        context "context"
-
-        mock "github.com/stretchr/testify/mock"
-)
-
-// Server is an autogenerated mock type for the Server type
-type Server struct {
-        mock.Mock
-}
-
-type Server_Expecter struct {
-        mock *mock.Mock
-}
-
-func (_m *Server) EXPECT() *Server_Expecter <span class="cov0" title="0">{
-        return &amp;Server_Expecter{mock: &amp;_m.Mock}
-}</span>
-
-// Start provides a mock function with given fields:
-func (_m *Server) Start() error <span class="cov0" title="0">{
-        ret := _m.Called()
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for Start")</span>
-        }
-
-        <span class="cov0" title="0">var r0 error
-        if rf, ok := ret.Get(0).(func() error); ok </span><span class="cov0" title="0">{
-                r0 = rf()
-        }</span> else<span class="cov0" title="0"> {
-                r0 = ret.Error(0)
-        }</span>
-
-        <span class="cov0" title="0">return r0</span>
-}
-
-// Server_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
-type Server_Start_Call struct {
-        *mock.Call
-}
-
-// Start is a helper method to define mock.On call
-func (_e *Server_Expecter) Start() *Server_Start_Call <span class="cov0" title="0">{
-        return &amp;Server_Start_Call{Call: _e.mock.On("Start")}
-}</span>
-
-func (_c *Server_Start_Call) Run(run func()) *Server_Start_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run()
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *Server_Start_Call) Return(_a0 error) *Server_Start_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0)
-        return _c
-}</span>
-
-func (_c *Server_Start_Call) RunAndReturn(run func() error) *Server_Start_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// Stop provides a mock function with given fields: ctx
-func (_m *Server) Stop(ctx context.Context) error <span class="cov0" title="0">{
-        ret := _m.Called(ctx)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for Stop")</span>
-        }
-
-        <span class="cov0" title="0">var r0 error
-        if rf, ok := ret.Get(0).(func(context.Context) error); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx)
-        }</span> else<span class="cov0" title="0"> {
-                r0 = ret.Error(0)
-        }</span>
-
-        <span class="cov0" title="0">return r0</span>
-}
-
-// Server_Stop_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Stop'
-type Server_Stop_Call struct {
-        *mock.Call
-}
-
-// Stop is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Server_Expecter) Stop(ctx interface{}) *Server_Stop_Call <span class="cov0" title="0">{
-        return &amp;Server_Stop_Call{Call: _e.mock.On("Stop", ctx)}
-}</span>
-
-func (_c *Server_Stop_Call) Run(run func(ctx context.Context)) *Server_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *Server_Stop_Call) Return(_a0 error) *Server_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0)
-        return _c
-}</span>
-
-func (_c *Server_Stop_Call) RunAndReturn(run func(context.Context) error) *Server_Stop_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// NewServer creates a new instance of Server. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewServer(t interface {
-        mock.TestingT
-        Cleanup(func())
-}) *Server <span class="cov0" title="0">{
-        mock := &amp;Server{}
-        mock.Mock.Test(t)
-
-        t.Cleanup(func() </span><span class="cov0" title="0">{ mock.AssertExpectations(t) }</span>)
-
-        <span class="cov0" title="0">return mock</span>
+        <span class="cov8" title="1">return data, nil</span>
 }
 </pre>
 		
@@ -1388,7 +1256,7 @@ func NewServer(t interface {
 package mocks
 
 import (
-        models "app/internal/models"
+        models "app/internal/interfaces/repositories/models"
         context "context"
 
         mock "github.com/stretchr/testify/mock"
@@ -1407,131 +1275,59 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter <span class="cov0" t
         return &amp;UserRepository_Expecter{mock: &amp;_m.Mock}
 }</span>
 
-// CreateUser provides a mock function with given fields: ctx, userObject
-func (_m *UserRepository) CreateUser(ctx context.Context, userObject *models.User) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, userObject)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for CreateUser")</span>
-        }
-
-        <span class="cov0" title="0">var r0 *models.User
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, *models.User) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, userObject)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, *models.User) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, userObject)
-        }</span> else<span class="cov0" title="0"> {
-                if ret.Get(0) != nil </span><span class="cov0" title="0">{
-                        r0 = ret.Get(0).(*models.User)
-                }</span>
-        }
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, *models.User) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, userObject)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
-        }</span>
-
-        <span class="cov0" title="0">return r0, r1</span>
-}
-
-// UserRepository_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
-type UserRepository_CreateUser_Call struct {
-        *mock.Call
-}
-
-// CreateUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userObject *models.User
-func (_e *UserRepository_Expecter) CreateUser(ctx interface{}, userObject interface{}) *UserRepository_CreateUser_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, userObject)}
-}</span>
-
-func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, userObject *models.User)) *UserRepository_CreateUser_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(*models.User))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *UserRepository_CreateUser_Call) Return(_a0 *models.User, _a1 error) *UserRepository_CreateUser_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
-        return _c
-}</span>
-
-func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(context.Context, *models.User) (*models.User, error)) *UserRepository_CreateUser_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// GetUserByEmail provides a mock function with given fields: ctx, email, password
-func (_m *UserRepository) GetUserByEmail(ctx context.Context, email string, password string) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, email, password)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for GetUserByEmail")</span>
-        }
-
-        <span class="cov0" title="0">var r0 *models.User
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, email, password)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, email, password)
-        }</span> else<span class="cov0" title="0"> {
-                if ret.Get(0) != nil </span><span class="cov0" title="0">{
-                        r0 = ret.Get(0).(*models.User)
-                }</span>
-        }
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, email, password)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
-        }</span>
-
-        <span class="cov0" title="0">return r0, r1</span>
-}
-
-// UserRepository_GetUserByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByEmail'
-type UserRepository_GetUserByEmail_Call struct {
-        *mock.Call
-}
-
-// GetUserByEmail is a helper method to define mock.On call
-//   - ctx context.Context
-//   - email string
-//   - password string
-func (_e *UserRepository_Expecter) GetUserByEmail(ctx interface{}, email interface{}, password interface{}) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_GetUserByEmail_Call{Call: _e.mock.On("GetUserByEmail", ctx, email, password)}
-}</span>
-
-func (_c *UserRepository_GetUserByEmail_Call) Run(run func(ctx context.Context, email string, password string)) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(string), args[2].(string))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *UserRepository_GetUserByEmail_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
-        return _c
-}</span>
-
-func (_c *UserRepository_GetUserByEmail_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// GetUserByID provides a mock function with given fields: ctx, id
-func (_m *UserRepository) GetUserByID(ctx context.Context, id int) (*models.User, error) <span class="cov0" title="0">{
+// DeleteUser provides a mock function with given fields: ctx, id
+func (_m *UserRepository) DeleteUser(ctx context.Context, id int) error <span class="cov0" title="0">{
         ret := _m.Called(ctx, id)
 
         if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for GetUserByID")</span>
+                panic("no return value specified for DeleteUser")</span>
+        }
+
+        <span class="cov0" title="0">var r0 error
+        if rf, ok := ret.Get(0).(func(context.Context, int) error); ok </span><span class="cov0" title="0">{
+                r0 = rf(ctx, id)
+        }</span> else<span class="cov0" title="0"> {
+                r0 = ret.Error(0)
+        }</span>
+
+        <span class="cov0" title="0">return r0</span>
+}
+
+// UserRepository_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
+type UserRepository_DeleteUser_Call struct {
+        *mock.Call
+}
+
+// DeleteUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id int
+func (_e *UserRepository_Expecter) DeleteUser(ctx interface{}, id interface{}) *UserRepository_DeleteUser_Call <span class="cov0" title="0">{
+        return &amp;UserRepository_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, id)}
+}</span>
+
+func (_c *UserRepository_DeleteUser_Call) Run(run func(ctx context.Context, id int)) *UserRepository_DeleteUser_Call <span class="cov0" title="0">{
+        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
+                run(args[0].(context.Context), args[1].(int))
+        }</span>)
+        <span class="cov0" title="0">return _c</span>
+}
+
+func (_c *UserRepository_DeleteUser_Call) Return(_a0 error) *UserRepository_DeleteUser_Call <span class="cov0" title="0">{
+        _c.Call.Return(_a0)
+        return _c
+}</span>
+
+func (_c *UserRepository_DeleteUser_Call) RunAndReturn(run func(context.Context, int) error) *UserRepository_DeleteUser_Call <span class="cov0" title="0">{
+        _c.Call.Return(run)
+        return _c
+}</span>
+
+// GetUser provides a mock function with given fields: ctx, id
+func (_m *UserRepository) GetUser(ctx context.Context, id int) (*models.User, error) <span class="cov0" title="0">{
+        ret := _m.Called(ctx, id)
+
+        if len(ret) == 0 </span><span class="cov0" title="0">{
+                panic("no return value specified for GetUser")</span>
         }
 
         <span class="cov0" title="0">var r0 *models.User
@@ -1556,58 +1352,58 @@ func (_m *UserRepository) GetUserByID(ctx context.Context, id int) (*models.User
         <span class="cov0" title="0">return r0, r1</span>
 }
 
-// UserRepository_GetUserByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByID'
-type UserRepository_GetUserByID_Call struct {
+// UserRepository_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+type UserRepository_GetUser_Call struct {
         *mock.Call
 }
 
-// GetUserByID is a helper method to define mock.On call
+// GetUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id int
-func (_e *UserRepository_Expecter) GetUserByID(ctx interface{}, id interface{}) *UserRepository_GetUserByID_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_GetUserByID_Call{Call: _e.mock.On("GetUserByID", ctx, id)}
+func (_e *UserRepository_Expecter) GetUser(ctx interface{}, id interface{}) *UserRepository_GetUser_Call <span class="cov0" title="0">{
+        return &amp;UserRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, id)}
 }</span>
 
-func (_c *UserRepository_GetUserByID_Call) Run(run func(ctx context.Context, id int)) *UserRepository_GetUserByID_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, id int)) *UserRepository_GetUser_Call <span class="cov0" title="0">{
         _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
                 run(args[0].(context.Context), args[1].(int))
         }</span>)
         <span class="cov0" title="0">return _c</span>
 }
 
-func (_c *UserRepository_GetUserByID_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUserByID_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUser_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUser_Call <span class="cov0" title="0">{
         _c.Call.Return(_a0, _a1)
         return _c
 }</span>
 
-func (_c *UserRepository_GetUserByID_Call) RunAndReturn(run func(context.Context, int) (*models.User, error)) *UserRepository_GetUserByID_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(context.Context, int) (*models.User, error)) *UserRepository_GetUser_Call <span class="cov0" title="0">{
         _c.Call.Return(run)
         return _c
 }</span>
 
-// GetUserByPhone provides a mock function with given fields: ctx, phone, password
-func (_m *UserRepository) GetUserByPhone(ctx context.Context, phone string, password string) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, phone, password)
+// GetUserByEmail provides a mock function with given fields: ctx, email
+func (_m *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) <span class="cov0" title="0">{
+        ret := _m.Called(ctx, email)
 
         if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for GetUserByPhone")</span>
+                panic("no return value specified for GetUserByEmail")</span>
         }
 
         <span class="cov0" title="0">var r0 *models.User
         var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, phone, password)
+        if rf, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
+                return rf(ctx, email)
         }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, phone, password)
+        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string) *models.User); ok </span><span class="cov0" title="0">{
+                r0 = rf(ctx, email)
         }</span> else<span class="cov0" title="0"> {
                 if ret.Get(0) != nil </span><span class="cov0" title="0">{
                         r0 = ret.Get(0).(*models.User)
                 }</span>
         }
 
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, phone, password)
+        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string) error); ok </span><span class="cov0" title="0">{
+                r1 = rf(ctx, email)
         }</span> else<span class="cov0" title="0"> {
                 r1 = ret.Error(1)
         }</span>
@@ -1615,149 +1411,78 @@ func (_m *UserRepository) GetUserByPhone(ctx context.Context, phone string, pass
         <span class="cov0" title="0">return r0, r1</span>
 }
 
-// UserRepository_GetUserByPhone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByPhone'
-type UserRepository_GetUserByPhone_Call struct {
+// UserRepository_GetUserByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByEmail'
+type UserRepository_GetUserByEmail_Call struct {
         *mock.Call
 }
 
-// GetUserByPhone is a helper method to define mock.On call
+// GetUserByEmail is a helper method to define mock.On call
 //   - ctx context.Context
-//   - phone string
-//   - password string
-func (_e *UserRepository_Expecter) GetUserByPhone(ctx interface{}, phone interface{}, password interface{}) *UserRepository_GetUserByPhone_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_GetUserByPhone_Call{Call: _e.mock.On("GetUserByPhone", ctx, phone, password)}
+//   - email string
+func (_e *UserRepository_Expecter) GetUserByEmail(ctx interface{}, email interface{}) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
+        return &amp;UserRepository_GetUserByEmail_Call{Call: _e.mock.On("GetUserByEmail", ctx, email)}
 }</span>
 
-func (_c *UserRepository_GetUserByPhone_Call) Run(run func(ctx context.Context, phone string, password string)) *UserRepository_GetUserByPhone_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUserByEmail_Call) Run(run func(ctx context.Context, email string)) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
         _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(string), args[2].(string))
+                run(args[0].(context.Context), args[1].(string))
         }</span>)
         <span class="cov0" title="0">return _c</span>
 }
 
-func (_c *UserRepository_GetUserByPhone_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUserByPhone_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUserByEmail_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
         _c.Call.Return(_a0, _a1)
         return _c
 }</span>
 
-func (_c *UserRepository_GetUserByPhone_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserRepository_GetUserByPhone_Call <span class="cov0" title="0">{
+func (_c *UserRepository_GetUserByEmail_Call) RunAndReturn(run func(context.Context, string) (*models.User, error)) *UserRepository_GetUserByEmail_Call <span class="cov0" title="0">{
         _c.Call.Return(run)
         return _c
 }</span>
 
-// GetUserByUsername provides a mock function with given fields: ctx, username, password
-func (_m *UserRepository) GetUserByUsername(ctx context.Context, username string, password string) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, username, password)
+// SaveUser provides a mock function with given fields: ctx, _a1
+func (_m *UserRepository) SaveUser(ctx context.Context, _a1 *models.User) error <span class="cov0" title="0">{
+        ret := _m.Called(ctx, _a1)
 
         if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for GetUserByUsername")</span>
+                panic("no return value specified for SaveUser")</span>
         }
 
-        <span class="cov0" title="0">var r0 *models.User
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, username, password)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, username, password)
+        <span class="cov0" title="0">var r0 error
+        if rf, ok := ret.Get(0).(func(context.Context, *models.User) error); ok </span><span class="cov0" title="0">{
+                r0 = rf(ctx, _a1)
         }</span> else<span class="cov0" title="0"> {
-                if ret.Get(0) != nil </span><span class="cov0" title="0">{
-                        r0 = ret.Get(0).(*models.User)
-                }</span>
-        }
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, username, password)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
+                r0 = ret.Error(0)
         }</span>
 
-        <span class="cov0" title="0">return r0, r1</span>
+        <span class="cov0" title="0">return r0</span>
 }
 
-// UserRepository_GetUserByUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByUsername'
-type UserRepository_GetUserByUsername_Call struct {
+// UserRepository_SaveUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveUser'
+type UserRepository_SaveUser_Call struct {
         *mock.Call
 }
 
-// GetUserByUsername is a helper method to define mock.On call
+// SaveUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - username string
-//   - password string
-func (_e *UserRepository_Expecter) GetUserByUsername(ctx interface{}, username interface{}, password interface{}) *UserRepository_GetUserByUsername_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username, password)}
+//   - _a1 *models.User
+func (_e *UserRepository_Expecter) SaveUser(ctx interface{}, _a1 interface{}) *UserRepository_SaveUser_Call <span class="cov0" title="0">{
+        return &amp;UserRepository_SaveUser_Call{Call: _e.mock.On("SaveUser", ctx, _a1)}
 }</span>
 
-func (_c *UserRepository_GetUserByUsername_Call) Run(run func(ctx context.Context, username string, password string)) *UserRepository_GetUserByUsername_Call <span class="cov0" title="0">{
+func (_c *UserRepository_SaveUser_Call) Run(run func(ctx context.Context, _a1 *models.User)) *UserRepository_SaveUser_Call <span class="cov0" title="0">{
         _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(string), args[2].(string))
+                run(args[0].(context.Context), args[1].(*models.User))
         }</span>)
         <span class="cov0" title="0">return _c</span>
 }
 
-func (_c *UserRepository_GetUserByUsername_Call) Return(_a0 *models.User, _a1 error) *UserRepository_GetUserByUsername_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
+func (_c *UserRepository_SaveUser_Call) Return(_a0 error) *UserRepository_SaveUser_Call <span class="cov0" title="0">{
+        _c.Call.Return(_a0)
         return _c
 }</span>
 
-func (_c *UserRepository_GetUserByUsername_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserRepository_GetUserByUsername_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// UpdateLastLogin provides a mock function with given fields: ctx, id
-func (_m *UserRepository) UpdateLastLogin(ctx context.Context, id uint) (bool, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, id)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for UpdateLastLogin")</span>
-        }
-
-        <span class="cov0" title="0">var r0 bool
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, uint) (bool, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, id)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, uint) bool); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, id)
-        }</span> else<span class="cov0" title="0"> {
-                r0 = ret.Get(0).(bool)
-        }</span>
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, id)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
-        }</span>
-
-        <span class="cov0" title="0">return r0, r1</span>
-}
-
-// UserRepository_UpdateLastLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateLastLogin'
-type UserRepository_UpdateLastLogin_Call struct {
-        *mock.Call
-}
-
-// UpdateLastLogin is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uint
-func (_e *UserRepository_Expecter) UpdateLastLogin(ctx interface{}, id interface{}) *UserRepository_UpdateLastLogin_Call <span class="cov0" title="0">{
-        return &amp;UserRepository_UpdateLastLogin_Call{Call: _e.mock.On("UpdateLastLogin", ctx, id)}
-}</span>
-
-func (_c *UserRepository_UpdateLastLogin_Call) Run(run func(ctx context.Context, id uint)) *UserRepository_UpdateLastLogin_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(uint))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *UserRepository_UpdateLastLogin_Call) Return(_a0 bool, _a1 error) *UserRepository_UpdateLastLogin_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
-        return _c
-}</span>
-
-func (_c *UserRepository_UpdateLastLogin_Call) RunAndReturn(run func(context.Context, uint) (bool, error)) *UserRepository_UpdateLastLogin_Call <span class="cov0" title="0">{
+func (_c *UserRepository_SaveUser_Call) RunAndReturn(run func(context.Context, *models.User) error) *UserRepository_SaveUser_Call <span class="cov0" title="0">{
         _c.Call.Return(run)
         return _c
 }</span>
@@ -1782,7 +1507,7 @@ func NewUserRepository(t interface {
 package mocks
 
 import (
-        models "app/internal/models"
+        models "app/internal/interfaces/repositories/models"
         context "context"
 
         mock "github.com/stretchr/testify/mock"
@@ -1861,126 +1586,6 @@ func (_c *UserUsecase_LoginWithEmail_Call) RunAndReturn(run func(context.Context
         return _c
 }</span>
 
-// LoginWithPhone provides a mock function with given fields: ctx, phone, password
-func (_m *UserUsecase) LoginWithPhone(ctx context.Context, phone string, password string) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, phone, password)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for LoginWithPhone")</span>
-        }
-
-        <span class="cov0" title="0">var r0 *models.User
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, phone, password)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, phone, password)
-        }</span> else<span class="cov0" title="0"> {
-                if ret.Get(0) != nil </span><span class="cov0" title="0">{
-                        r0 = ret.Get(0).(*models.User)
-                }</span>
-        }
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, phone, password)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
-        }</span>
-
-        <span class="cov0" title="0">return r0, r1</span>
-}
-
-// UserUsecase_LoginWithPhone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoginWithPhone'
-type UserUsecase_LoginWithPhone_Call struct {
-        *mock.Call
-}
-
-// LoginWithPhone is a helper method to define mock.On call
-//   - ctx context.Context
-//   - phone string
-//   - password string
-func (_e *UserUsecase_Expecter) LoginWithPhone(ctx interface{}, phone interface{}, password interface{}) *UserUsecase_LoginWithPhone_Call <span class="cov0" title="0">{
-        return &amp;UserUsecase_LoginWithPhone_Call{Call: _e.mock.On("LoginWithPhone", ctx, phone, password)}
-}</span>
-
-func (_c *UserUsecase_LoginWithPhone_Call) Run(run func(ctx context.Context, phone string, password string)) *UserUsecase_LoginWithPhone_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(string), args[2].(string))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *UserUsecase_LoginWithPhone_Call) Return(_a0 *models.User, _a1 error) *UserUsecase_LoginWithPhone_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
-        return _c
-}</span>
-
-func (_c *UserUsecase_LoginWithPhone_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserUsecase_LoginWithPhone_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
-// LoginWithUsername provides a mock function with given fields: ctx, username, password
-func (_m *UserUsecase) LoginWithUsername(ctx context.Context, username string, password string) (*models.User, error) <span class="cov0" title="0">{
-        ret := _m.Called(ctx, username, password)
-
-        if len(ret) == 0 </span><span class="cov0" title="0">{
-                panic("no return value specified for LoginWithUsername")</span>
-        }
-
-        <span class="cov0" title="0">var r0 *models.User
-        var r1 error
-        if rf, ok := ret.Get(0).(func(context.Context, string, string) (*models.User, error)); ok </span><span class="cov0" title="0">{
-                return rf(ctx, username, password)
-        }</span>
-        <span class="cov0" title="0">if rf, ok := ret.Get(0).(func(context.Context, string, string) *models.User); ok </span><span class="cov0" title="0">{
-                r0 = rf(ctx, username, password)
-        }</span> else<span class="cov0" title="0"> {
-                if ret.Get(0) != nil </span><span class="cov0" title="0">{
-                        r0 = ret.Get(0).(*models.User)
-                }</span>
-        }
-
-        <span class="cov0" title="0">if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok </span><span class="cov0" title="0">{
-                r1 = rf(ctx, username, password)
-        }</span> else<span class="cov0" title="0"> {
-                r1 = ret.Error(1)
-        }</span>
-
-        <span class="cov0" title="0">return r0, r1</span>
-}
-
-// UserUsecase_LoginWithUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoginWithUsername'
-type UserUsecase_LoginWithUsername_Call struct {
-        *mock.Call
-}
-
-// LoginWithUsername is a helper method to define mock.On call
-//   - ctx context.Context
-//   - username string
-//   - password string
-func (_e *UserUsecase_Expecter) LoginWithUsername(ctx interface{}, username interface{}, password interface{}) *UserUsecase_LoginWithUsername_Call <span class="cov0" title="0">{
-        return &amp;UserUsecase_LoginWithUsername_Call{Call: _e.mock.On("LoginWithUsername", ctx, username, password)}
-}</span>
-
-func (_c *UserUsecase_LoginWithUsername_Call) Run(run func(ctx context.Context, username string, password string)) *UserUsecase_LoginWithUsername_Call <span class="cov0" title="0">{
-        _c.Call.Run(func(args mock.Arguments) </span><span class="cov0" title="0">{
-                run(args[0].(context.Context), args[1].(string), args[2].(string))
-        }</span>)
-        <span class="cov0" title="0">return _c</span>
-}
-
-func (_c *UserUsecase_LoginWithUsername_Call) Return(_a0 *models.User, _a1 error) *UserUsecase_LoginWithUsername_Call <span class="cov0" title="0">{
-        _c.Call.Return(_a0, _a1)
-        return _c
-}</span>
-
-func (_c *UserUsecase_LoginWithUsername_Call) RunAndReturn(run func(context.Context, string, string) (*models.User, error)) *UserUsecase_LoginWithUsername_Call <span class="cov0" title="0">{
-        _c.Call.Return(run)
-        return _c
-}</span>
-
 // RegisterUser provides a mock function with given fields: ctx, data
 func (_m *UserUsecase) RegisterUser(ctx context.Context, data *models.User) (*models.User, error) <span class="cov8" title="1">{
         ret := _m.Called(ctx, data)
@@ -1997,7 +1602,7 @@ func (_m *UserUsecase) RegisterUser(ctx context.Context, data *models.User) (*mo
         <span class="cov8" title="1">if rf, ok := ret.Get(0).(func(context.Context, *models.User) *models.User); ok </span><span class="cov0" title="0">{
                 r0 = rf(ctx, data)
         }</span> else<span class="cov8" title="1"> {
-                if ret.Get(0) != nil </span><span class="cov8" title="1">{
+                if ret.Get(0) != nil </span><span class="cov0" title="0">{
                         r0 = ret.Get(0).(*models.User)
                 }</span>
         }
@@ -2055,54 +1660,11 @@ func NewUserUsecase(t interface {
 }
 </pre>
 		
-		<pre class="file" id="file24" style="display: none">package models
-
-import (
-        "app/internal/consts"
-        "app/internal/utils"
-        "errors"
-        "fmt"
-        "time"
-
-        "golang.org/x/crypto/bcrypt"
-        "gorm.io/gorm"
-)
-
-type User struct {
-        gorm.Model
-  Fullname    string 
-  PhoneNumber string 
-  Email       string `gorm:"unique"`
-  Username    string
-        Password    string
-        Birthday    time.Time
-        LatestLogin time.Time
-}
-
-// Hash password before insert into database
-func (u *User) BeforeCreate(tx *gorm.DB) (err error)  <span class="cov0" title="0">{
-  u.Password, err = utils.HashPassword(u.Password)
-
-  if err != nil </span><span class="cov0" title="0">{
-    if errors.Is(err, bcrypt.ErrPasswordTooLong) </span><span class="cov0" title="0">{
-      err = consts.NewError(fmt.Errorf("password too long; %v", err))
-      return
-    }</span>
-    <span class="cov0" title="0">if errors.Is(err, bcrypt.ErrHashTooShort) </span><span class="cov0" title="0">{
-      err = consts.NewError(fmt.Errorf("password too short; %v", err))
-      return
-    }</span>
-    <span class="cov0" title="0">err = consts.NewError(fmt.Errorf("failed to hash password; %v", err))</span>
-  }
-  <span class="cov0" title="0">return</span>
-}
-</pre>
-		
-		<pre class="file" id="file25" style="display: none">package utils
+		<pre class="file" id="file24" style="display: none">package utils
 
 import "golang.org/x/crypto/bcrypt"
 
-func HashPassword(password string) (string, error) <span class="cov0" title="0">{
+func HashPassword(password string) (string, error) <span class="cov8" title="1">{
         bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
         return string(bytes), err
 }</span>
@@ -2113,7 +1675,7 @@ func CheckPasswordHash(password, hash string) bool <span class="cov0" title="0">
 }</span>
 </pre>
 		
-		<pre class="file" id="file26" style="display: none">package utils
+		<pre class="file" id="file25" style="display: none">package utils
 
 import (
         "app/internal/consts"
@@ -2133,8 +1695,7 @@ func BindRequest(c *gin.Context, request interface{}, handlerTag string) error <
 }
 </pre>
 		
-		<pre class="file" id="file27" style="display: none">
-package utils
+		<pre class="file" id="file26" style="display: none">package utils
 
 import (
         "net/http"
@@ -2143,29 +1704,28 @@ import (
 )
 
 type ResponseObject struct {
-        Success bool        `json:"success"`
         Message string      `json:"message,omitempty"`
         Data    interface{} `json:"data"`
 }
 
 func JSON(c *gin.Context, data interface{}) <span class="cov0" title="0">{
         if gin.IsDebugging() </span><span class="cov0" title="0">{
-                c.IndentedJSON(http.StatusOK, ResponseObject{Success: true, Data: data})
+                c.IndentedJSON(http.StatusOK, ResponseObject{Data: data})
         }</span> else<span class="cov0" title="0"> {
-                c.JSON(http.StatusOK, ResponseObject{Success: true, Data: data})
+                c.JSON(http.StatusOK, ResponseObject{Data: data})
         }</span>
 }
 
 func Error(c *gin.Context, code int, err error, data interface{}, messages ...string) <span class="cov0" title="0">{
-  message := err.Error()
-  for _, msg := range messages </span><span class="cov0" title="0">{
-    message += msg
-  }</span>
-        <span class="cov0" title="0">c.JSON(code, ResponseObject{Success: false, Data: data, Message: message})</span>
+        message := err.Error()
+        for _, msg := range messages </span><span class="cov0" title="0">{
+                message += msg
+        }</span>
+        <span class="cov0" title="0">c.JSON(code, ResponseObject{Data: data, Message: message})</span>
 }
 </pre>
 		
-		<pre class="file" id="file28" style="display: none">package main
+		<pre class="file" id="file27" style="display: none">package main
 
 import (
         "app/cmd"

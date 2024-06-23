@@ -20,7 +20,7 @@ db/connect:
 	pgcli -h 0.0.0.0 -u postgres -W -d my_db
 
 test:
-	go test -v ./... 
+	go test ./... 
 
 coverage:
 	go test -v -coverprofile cover.out ./... || true

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"app/internal/consts"
 	"app/internal/utils"
 	"errors"
 	"time"
@@ -11,8 +10,8 @@ import (
 )
 
 var (
-  ErrPasswordTooLong = errors.New("password: too long for hashing")
-  ErrPasswordTooShort = errors.New("password: too short for hashing")
+  ErrPasswordTooLong = errors.New("password: too long")
+  ErrPasswordTooShort = errors.New("password: too short")
   ErrPasswordHash = errors.New("password: hash failed")
 )
 
@@ -28,20 +27,18 @@ type User struct {
 
 // Hash password before insert into database
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+  if len(u.Password) < 7 {
+    return ErrPasswordTooShort
+  }
 	u.Password, err = utils.HashPassword(u.Password)
 
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrPasswordTooLong) {
-			err = consts.NewError(ErrPasswordTooLong)
-			return
+			return ErrPasswordTooLong
 		}
-		if errors.Is(err, bcrypt.ErrHashTooShort) {
-			err = consts.NewError(ErrPasswordTooShort)
-			return
-		}
-		err = consts.NewError(ErrPasswordHash).WithRootCause(err)
+	  return err
 	}
-	return
+	return nil
 }
 
 func (u *User) ComparePassword(password string) bool {
